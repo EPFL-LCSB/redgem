@@ -1,4 +1,4 @@
-function  [model_red, rxns ,info_LMDP, missingMets] = add_lumped_reactions(GSM_ForLumping, LumpedRxnFormulas,bbbNames, DB_AlbertyUpdate, all_core_rxns, ImposeThermodynamics, CplexParameters, OUTPUTpath, Organism, GEMname, activeRxns)
+function  [model_red, rxns ,info_LMDP, missingMets] = add_lumped_reactions(GSM_ForLumping, LumpedRxnFormulas,bbbNames, DB_AlbertyUpdate, all_core_rxns, ImposeThermodynamics, CplexParameters, Organism, GEMname, activeRxns)
 % This function incorporates all the lumped reactions into a reduced model
 %
 % INPUTS
@@ -25,7 +25,7 @@ function  [model_red, rxns ,info_LMDP, missingMets] = add_lumped_reactions(GSM_F
 
 % > > > > > > > > > SAVING  WORKSPACE > > > > > > > > > > > > > > > > > > > > > > > > > > > > >
 [dateStr, timeStr] = getDateTimeStrings(date,clock);                                            %
-eval(['save ',OUTPUTpath,'/TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_1.mat;'])    %
+eval(['save ','./TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_1.mat;'])    %
 % < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < <
 
 % Make the formulas of all the lumped reactions uni-directional
@@ -110,7 +110,7 @@ model_red.info_LMDP=info_LMDP;
 
 % > > > > > > > > > SAVING  WORKSPACE > > > > > > > > > > > > > > > > > > > > > > > > > > > > >
 [dateStr, timeStr] = getDateTimeStrings(date,clock);                                            %
-eval(['save ',OUTPUTpath,'/TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_2.mat;'])    %
+eval(['save ','./TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_2.mat;'])    %
 % < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < <
 
 end
