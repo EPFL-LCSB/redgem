@@ -65,7 +65,6 @@ end
 
 
 
-
 DPsAll = {};
 
 % For easier operations we just rename the other reactions to indices of
@@ -238,24 +237,12 @@ for i=1:length(LumpCstModel.rxns(IdNCNTR))
     end
 end
 
-%     for i=1:length(LumpCstModel.rxns(IdNCNTR))
-%         if ~isempty(strfind(LumpCstModel.rxns{IdNCNTR(i)}, 'DM_'))
-%             exch_pattern(i)=0;
-%         elseif ~isempty(strfind(LumpCstModel.rxns{IdNCNTR(i)}, 'EX_'))
-%             exch_pattern(i)=0;
-%         elseif ~isempty(strfind(LumpCstModel.rxns{IdNCNTR(i)}, 'sink'))
-%             exch_pattern(i)=0;
-%         else
-%             exch_pattern(i)=1;
-%         end
-%     end
-%end
+
 % These are the indices of the LumpCstModel that are NON-core, NOT
 % transport, and also NOT exchange reactions
 IdNCNTNER = IdNCNTR(find(exch_pattern));
 
 % Get variable indeces for F and R of the IdNCNTNER
-[~, num_vars] = size(LumpCstModel.A);
 forward = getAllVar(LumpCstModel, {'F'});
 forward = forward(IdNCNTNER);
 backward = getAllVar(LumpCstModel, {'R'});
@@ -272,62 +259,6 @@ for i=1:length(IdNCNTNER)
     %function function maximize BFUSE vars
 end
 
-% %now create constraint that is 1*F + 1*B + 60*BFUSE < 60
-% %interpretation: if BFUSE is on, F and B are off. We will maximize # of BFUSE
-% %to get the fewest active reactions. remember, here we havent added basal fluxes
-% if length(forward)==length(backward)
-%     for i=1:length(forward)
-%         [num_constr,~] = size(LumpCstModel.A);
-%         LumpCstModel.rhs(num_constr+1,1) =  UnitFactor*60;
-%         LumpCstModel.constraintNames{num_constr+1,1} = strcat('BFMER_',num2str(i));
-%         LumpCstModel.constraintType{num_constr+1,1} = '<';
-%         LumpCstModel.A(num_constr+1,forward(i)) = 1;
-%         LumpCstModel.A(num_constr+1,backward(i)) = 1;
-%         % The new i-th variable 'BFUSE_' that is used to minimize the
-%         % number of active reactions, will have index: num_vars+i
-%         LumpCstModel.A(num_constr+1,num_vars+i) = UnitFactor*60;
-%     end
-% else
-%     error('length(forward) not equal to length(backward)')
-% end
-
-% below meric added constraints to tighten the system. I believe he forces
-% a minimal amount of flux through the lumped reaction:
-% 1*F + 1*B + 1*BFUSE > 1e-04
-% which makes the solver operate much faster
-
-% [num_constr,~] = size(LumpCstModel.A);
-% if length(forward)==length(backward)
-%     for i=1:length(forward)
-%         LumpCstModel.rhs(num_constr+i,1) = UnitFactor*1e-6;
-%         LumpCstModel.constraintNames{num_constr+i,1} = strcat('BFMER2_',num2str(i));
-%         LumpCstModel.constraintType{num_constr+i,1} = '>';
-%         LumpCstModel.A(num_constr+i,forward(i)) = 1;
-%         LumpCstModel.A(num_constr+i,backward(i)) = 1;
-%         LumpCstModel.A(num_constr+i,num_vars+i) = 1;
-%     end
-% else
-%     error('length(forward) not equal to length(backward)')
-% end
-
-% % Create binary variables (B) for the forward ('FUSE_') and backward
-% % ('BUSE_') reactions
-% for i=1:length(IdNCNTNER)
-%     LumpCstModel.varNames(length(LumpCstModel.varNames)+1) = strcat('FUSE_', LumpCstModel.rxns(IdNCNTNER(i)));
-%     LumpCstModel.var_ub(length(LumpCstModel.varNames)) = 1;
-%     LumpCstModel.var_lb(length(LumpCstModel.varNames)) = 0;
-%     LumpCstModel.vartypes(length(LumpCstModel.varNames)) = {'B'};
-%     LumpCstModel.A(:, length(LumpCstModel.varNames)) = 0;
-%     LumpCstModel.f(length(LumpCstModel.varNames)) = 0;
-% end
-% for i=1:length(IdNCNTNER)
-%     LumpCstModel.varNames(length(LumpCstModel.varNames)+1) = strcat('BUSE_', LumpCstModel.rxns(IdNCNTNER(i)));
-%     LumpCstModel.var_ub(length(LumpCstModel.varNames)) = 1;
-%     LumpCstModel.var_lb(length(LumpCstModel.varNames)) = 0;
-%     LumpCstModel.vartypes(length(LumpCstModel.varNames)) = {'B'};
-%     LumpCstModel.A(:, length(LumpCstModel.varNames)) = 0;
-%     LumpCstModel.f(length(LumpCstModel.varNames)) = 0;
-% end
 
 % Find the indidces of the FUSE and BUSE variables:
 ind_fu = getAllVar(LumpCstModel, {'FU'});
@@ -335,34 +266,6 @@ ind_bu = getAllVar(LumpCstModel, {'BU'});
 
 ind_fu = ind_fu(IdNCNTNER);
 ind_bu = ind_bu(IdNCNTNER);
-
-% % Add constraints BFMER3_ : F -60*FUSE < 0
-% [num_constr,~] = size(LumpCstModel.A);
-% if length(forward)==length(backward)
-%     for i=1:length(forward)
-%         LumpCstModel.rhs(num_constr+i,1) =  0;
-%         LumpCstModel.constraintNames{num_constr+i,1} = strcat('BFMER3_',num2str(i));
-%         LumpCstModel.constraintType{num_constr+i,1} = '<';
-%         LumpCstModel.A(num_constr+i,forward(i)) = 1;
-%         LumpCstModel.A(num_constr+i, ind_fu(i)) = -60*UnitFactor;
-%     end
-% else
-%     error('length(forward) not equal to length(backward)')
-% end
-% 
-% % Add constraints BFMER4_ : B -60*BUSE < 0
-% [num_constr,~] = size(LumpCstModel.A);
-% if length(forward)==length(backward)
-%     for i=1:length(forward)
-%         LumpCstModel.rhs(num_constr+i,1) =  0;
-%         LumpCstModel.constraintNames{num_constr+i,1} = strcat('BFMER4_',num2str(i));
-%         LumpCstModel.constraintType{num_constr+i,1} = '<';
-%         LumpCstModel.A(num_constr+i,backward(i)) = 1;
-%         LumpCstModel.A(num_constr+i, ind_bu(i)) = -60*UnitFactor;
-%     end
-% else
-%     error('length(forward) not equal to length(backward)')
-% end
 
 % Add constraints BFMER5_ : FUSE + BUSE + BFUSE < 1
 ind_bfuse=getAllVar(LumpCstModel, {'BFUSE'});
@@ -385,7 +288,7 @@ end
 % Exclude water and bbbs that appear in more than one compartments in the
 % biomass equation
 bbb_not_to_lump = [{'h2o_c'} BBBsToExclude];
-%get indeces of forward and backward drains of the BBBs
+% Get indeces of forward and backward drains of the BBBs
 % Create forward/reverse drain reactions for all biomass building blocks:
 % adding the hydrolysis as a bbb_element that needs to be also balanced
 % And also for the additional hydrolysis reaction
@@ -412,7 +315,7 @@ stoich_bbb = [stoich_bbb; -1*UnitFactor];
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Time limit for the solver
-TimeLimit = 10*60; % 5 mins
+TimeLimit = 10*60; % 10 mins
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %begin lumping for each BBB
 
@@ -450,13 +353,7 @@ for i = 1:length(bbb_metnames)%parfor i = 1:length(bbb_metnames)
     if ~ismember(bbb_metnames{i}, bbb_not_to_lump)
         dmodel = LumpCstModel;
         dmodel.var_ub(ind_bbb_backward(i)) = 0;
-        %if strcmp(bbb_metnames{i}, 'GAM_c')
         dmodel.var_ub(ind_bbb_forward(i))  = UnitFactor * 10;
-        %end
-%              bmodel = dmodel;
-%              bmodel.f = zeros(length(bmodel.f),1);
-%              bmodel.f(ind_bbb_forward(i)) = 1;
-%              bbb_prod = solveTFBAmodelCplex(bmodel,10)
         dmodel.var_lb(ind_bbb_forward(i)) = roundsd(-muMax * stoich_bbb(i), 5, 'floor'); %negative because the coef is neg
         % CHANGE this to -* maximum growth (which should be 1)
         % dmodel.var_ub(ind_bbb_forward(i))= is free
