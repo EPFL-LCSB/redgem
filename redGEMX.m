@@ -153,8 +153,8 @@ for i=1:length(ExtraCellSubsystem_connect)
     [i ExtraCellSubsystem_connect(i)]
     model_for_extra_temp=model_for_extra;
 
-    mm_F = runTMinMax(model_for_extra_temp,model_for_extra_temp.varNames(bfor(i)));
-    mm_R = runTMinMax(model_for_extra_temp,model_for_extra_temp.varNames(bback(i)));
+    mm_F = runTMinMax(model_for_extra_temp,model_for_extra_temp.varNames(bfor(i)),300);
+    mm_R = runTMinMax(model_for_extra_temp,model_for_extra_temp.varNames(bback(i)),300);
 
     if min(mm_F(2),mm_R(2)) ~= 0 && min(mm_F(2),mm_R(2)) < 3
         rhs_i = min(mm_F(2),mm_R(2));       
