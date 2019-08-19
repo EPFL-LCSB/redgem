@@ -146,7 +146,7 @@ else
 end
 
 
-LumpCstModel = prepModelforTFBA(LumpCstModel, DB_AlbertyUpdate, LumpCstModel.CompartmentData, false, false);
+LumpCstModel = prepModelforTFA(LumpCstModel, DB_AlbertyUpdate, LumpCstModel.CompartmentData, false, false);
 verboseFlag = false;
 [LumpCstModel, relaxedDGoVarsValues] = convToTFA(LumpCstModel, DB_AlbertyUpdate, [], 'DGo', RxnNames_PrevThermRelax, minObjSolVal, [], [], verboseFlag);
 LumpCstModel.relaxedDGoVarsValues = relaxedDGoVarsValues;
@@ -359,9 +359,9 @@ for i = 1:length(bbb_metnames)%parfor i = 1:length(bbb_metnames)
         % dmodel.var_ub(ind_bbb_forward(i))= is free
         % aplly choice
         if strcmp(TimeLimitForSolver,'yes')
-            sol = solveTFBAmodelCplex(dmodel, TimeLimit, [], mipTolInt, emphPar, feasTol, scalPar, []);
+            sol = solveTFAmodelCplex(dmodel, TimeLimit, [], mipTolInt, emphPar, feasTol, scalPar, []);
         elseif strcmp(TimeLimitForSolver,'no')
-            sol = solveTFBAmodelCplex(dmodel, []       , [], mipTolInt, emphPar, feasTol, scalPar, []);
+            sol = solveTFAmodelCplex(dmodel, []       , [], mipTolInt, emphPar, feasTol, scalPar, []);
         else
             error('Wrong option!')
         end

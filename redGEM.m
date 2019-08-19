@@ -127,7 +127,7 @@ user_str = user_str{1}{1};
 
 % Add required paths:
 % - Cobra and the tFBA path
-addpath(genpath(fullfile(GITpath,'FBA_Toolboxes')))
+addpath(genpath(fullfile(GITpath,'matTFA_c4science')))
 % BASEPATH = fullfile(mfilename('fullpath') , '../../');
 % addpath(genpath(fullfile(BASEPATH, 'FBA_Toolboxes')))
 
@@ -644,10 +644,10 @@ if strcmp(performPostProcessing, 'PP_removeBlockedRxns') || ...
     RedFBASol = solveFBAmodelCplex(RedModel);
     RedFBASol = roundsd(RedFBASol.f, 4, 'floor');
     
-    RedModel = prepModelforTFBA(RedModel, DB_AlbertyUpdate, GEMmodel.CompartmentData,  false, false);
+    RedModel = prepModelforTFA(RedModel, DB_AlbertyUpdate, GEMmodel.CompartmentData,  false, false);
     [RedModel, relaxedDGoVarsValues_inPP1a] = convToTFA(RedModel, DB_AlbertyUpdate, [], 'DGo', RxnNames_PrevThermRelax, 0.1*RedFBASol);
     
-    RedTFASol = solveTFBAmodelCplex(RedModel);
+    RedTFASol = solveTFAmodelCplex(RedModel);
     RedTFASol = roundsd(RedTFASol.val, 4, 'floor');
     
     GEM_FBASol = solveFBAmodelCplex(GEMmodel);
@@ -685,7 +685,7 @@ if strcmp(performPostProcessing, 'PP_removeBlockedRxns') || ...
     RedModel = addNetFluxVariables(RedModel);
     % DO  NOT ADD BASAL FLUXES HERE!!! WE WANT ZERO FLUXES!!!!
     
-    temp_TFASol = solveTFBAmodelCplex(RedModel);
+    temp_TFASol = solveTFAmodelCplex(RedModel);
     RedModel.var_lb(find(RedModel.f))=temp_TFASol.val*0.7;
     
     
@@ -733,7 +733,7 @@ if strcmp(performPostProcessing, 'PP_removeBlockedRxns') || ...
     end
     
     % Now convert again to tFBA
-    RedModel = prepModelforTFBA(RedModel, DB_AlbertyUpdate, GEMmodel.CompartmentData, false, false);
+    RedModel = prepModelforTFA(RedModel, DB_AlbertyUpdate, GEMmodel.CompartmentData, false, false);
     verboseFlag = false;
     %RedModel = convToTFA(RedModel, DB_AlbertyUpdate, [], 'NO', [], [], [], [], verboseFlag);
     [RedModel, relaxedDGoVarsValues_inPP1b] = convToTFA(RedModel, DB_AlbertyUpdate, [], 'DGo', [], [], [], [], verboseFlag);

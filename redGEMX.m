@@ -189,7 +189,7 @@ for i=1:length(ExtraCellSubsystem_connect)
     model_for_extra_temp.A(num_constr+1,bfor(i)) = 1;
     model_for_extra_temp.A(num_constr+1,bback(i)) = 1;
 
-    sol = solveTFBAmodelCplex(model_for_extra_temp,300);
+    sol = solveTFAmodelCplex(model_for_extra_temp,300);
     
     if sol.val==0
         rxns_all{i,1} = 0;

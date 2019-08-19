@@ -213,14 +213,14 @@ tmini_model.var_ub(indfr)=1000*tmini_model.var_ub(indfr);
 tmini_model.var_lb(indfr)=1000*tmini_model.var_lb(indfr);
 
 tmini_model.vartypes(id_FB) = {'I'};
-sol = solveTFBAmodelCplex(tmini_model, [], [], mipTolInt, emphPar, feasTol, scalPar, []);
+sol = solveTFAmodelCplex(tmini_model, [], [], mipTolInt, emphPar, feasTol, scalPar, []);
  
 % However, sometimes this is not possible (e.g. reactions with rational coefficients involved)
 % And then we switch back to continuous variables to get a solution.
 if isempty(sol.x)
     disp('Integer solution was not found!! You can try increasing the 10^6 in line 188-189 to higher values...\n')
     tmini_model=tmini_model_orig;
-    sol = solveTFBAmodelCplex(tmini_model, [], [], mipTolInt, emphPar, feasTol, scalPar, []);
+    sol = solveTFAmodelCplex(tmini_model, [], [], mipTolInt, emphPar, feasTol, scalPar, []);
     flag=1;
 end
  

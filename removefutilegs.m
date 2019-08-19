@@ -52,7 +52,7 @@ for i = 1:size(mets)
             model.A(num_constr+1, bd) = 1;
             
             if checkgrowth
-                sol = solveTFBAmodelCplex(model, [], [], mipTolInt, emphPar, feasTol, scalPar, []);
+                sol = solveTFAmodelCplex(model, [], [], mipTolInt, emphPar, feasTol, scalPar, []);
                 if isempty(sol.x)
                     model = model_orig;
                 elseif sol.val<0.01
