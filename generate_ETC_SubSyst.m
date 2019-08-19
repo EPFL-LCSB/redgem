@@ -17,7 +17,6 @@ for i=1:length(model.rxns)
         end
     end
     if exist('mets_match', 'var')
-%         [~, ba]=ismember(mets_match, model.mets);
         
         if length(mets_match) > 1
             model.isETC(i,1)=1;

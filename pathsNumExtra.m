@@ -97,7 +97,6 @@ ModelMets=cell(D,1);
 
 for el=1:D
     for i=1:size(pairs,1)
-        %collect reactions   %FIX THIS TO WORK LIKE THE METABOLITES
         d=el-1+shortestLsub2subNumP(pairs(i,1),pairs(i,2));
         a=L_DirAdjMatC(source_mets{i}, target_mets{i},d);
         emptyCells = cellfun('isempty',a);

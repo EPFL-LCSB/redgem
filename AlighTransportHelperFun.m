@@ -7,7 +7,6 @@ if strcmp(AlignTransportsUsingMatFile,'yesautomatic')
     % like to exclude from the search for the identification of
     % transported metabolites
     idLMPD = find(~cellfun(@isempty,regexpi(RedModel.rxns,'^LMPD')));
-%   idBiomass = find_cell('Ec_biomass_iJO1366_WT_53p95M',RedModel.rxns);
     idBiomass = find(RedModel.c);
     idRxnsToExclude = union(idLMPD,idBiomass);
     if ~isempty(idRxnsToExclude)

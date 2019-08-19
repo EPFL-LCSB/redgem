@@ -4,12 +4,8 @@ function [DPs,objectives,model] = findDP_YIELD_TimeLimit(model,maxNumEPs,sol,use
 % Set properly the desired parameters for cplex LP and MILP
 [mipTolInt, scalPar, feasTol, emphPar] = setCplexParamHelper(CplexParameters);
 
-% [~,num_vars] = size(model.A);
 num_sols = 0;
 
-% use_vectors_indices = getAllVar(model,{'BFUSE'});
-% keyboard
-%     sol = solveTFBAmodel(model);
 count=1;
 while ((num_sols < maxNumEPs) && ~(isempty(sol)))
     
@@ -48,9 +44,6 @@ while ((num_sols < maxNumEPs) && ~(isempty(sol)))
 
         fprintf('Number of DPs:\t%d\n',num_sols);
         
-%         if rem(num_sols,5) == 0
-%             save DPs DPs;
-%         end
     end
     count=count+1;
 end

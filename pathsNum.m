@@ -37,7 +37,6 @@ direction = ApplyShortestDistanceOfSubsystems;
 numSS=length(unique(pairs));
 sub2subNumP=zeros(numSS,numSS,D);
 
-%% Pierre: 
 % Adding d_max for the cases where subsystems are not connected even after
 % L iterations (it happens), causing the while loop to go look for indices
 % larger than L in L_DirAdjMatWn (which is a tensor with 1:L as 3rd
@@ -121,15 +120,12 @@ ModelMets=cell(D,1);
 
 for el=1:D
     for k=1:size(pairs,1)
-        %collect reactions   %FIX THIS TO WORK LIKE THE METABOLITES
-        %% Pierre:
         % Added a if condition, in the case that subsystems are not linked,
         % d will stay at 0
         if shortestLsub2subNumP(pairs(k,1),pairs(k,2)) > 0
             d=el-1+shortestLsub2subNumP(pairs(k,1),pairs(k,2));
             a=L_DirAdjMatC(source_mets{k}, target_mets{k},d);
             emptyCells = cellfun('isempty',a);
-            %emptyCells = find(a==0);
             a(emptyCells) = [];
             uniqueReacs=unique([a{:}],'stable');    
             joiningReacs{pairs(k,1),pairs(k,2),el}=uniqueReacs;

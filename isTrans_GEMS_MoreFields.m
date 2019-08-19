@@ -38,7 +38,7 @@ for i=1:length(model.rxns)
         
         mets_to_check = model.mets(find(model.S(:, i)));
         [ab, bmets] = ismember(mets_to_check, mets_core_all);
-        if length(mets_to_check)==length(find(bmets));
+        if length(mets_to_check)==length(find(bmets))
             model.isCoreTrans(i,1) = 1;
         end
         

@@ -3,8 +3,7 @@ function [model, ActRxnFormulas, sol, net_fluxes] = addBIOMASSminRea(model, Ind_
 %what minimum percentage of original maximal growth do we want to calculate
 %extract the "subnetwork" with? default = 0.99
 if ~exist('minPercent','var') || isempty(minPercent)
-    %epsilon = 1e-6;
-    minPercent = 0.9;%-0*epsilon;
+    minPercent = 0.9;
 end
 
 % Set properly the desired parameters for cplex LP and MILP
@@ -35,7 +34,6 @@ end
 sol = solveTFBAmodelCplex(model,[],[],mipTolInt,emphPar,feasTol,scalPar,[]);
 % Set lower biomass production
 model.var_lb(find(model.f))=minPercent*sol.val;
-% model.lb(find(model.c))=minPercent*sol.val;
 
 % Reset all the objectives to zero
 model.f=zeros(length(model.varNames),1);
@@ -69,15 +67,13 @@ else
     error('ATTENTION: forward and backward reactions are not equal!!')
 end
 
-% Add NetFluxes variables to the model and their associated constraints
-% model = addNetFluxVariables(model);
-sol = solveTFBAmodelCplex(model, [], [], mipTolInt, emphPar, feasTol, scalPar, []);
+sol = solveTFAmodelCplex(model, [], [], mipTolInt, emphPar, feasTol, scalPar, []);
 
 % Find all the BFUSE indices
 Ind_BFUSE = getAllVar(model, {'BFUSE'});
 bfuse = sol.x(Ind_BFUSE);
 % Find which of the BFUSE variables are zero, i.e. which of the reactions
-rxnsBFUSE = find(bfuse==0);
+rxnsBFUSE = find(bfuse<1e-9);
 % If you model crashes around here, it is probable that either it is
 % infeasible or you have only the null solution
 ActBVarNames = model.varNames(Ind_BFUSE(rxnsBFUSE));
@@ -85,10 +81,8 @@ ActRxnNames = strrep(ActBVarNames, 'BFUSE_', '');
 [~, id_ActRxnNames] = ismember(ActRxnNames, model.rxns);
 ActRxnFormulas = printRxnFormula(model, model.rxns(id_ActRxnNames));
 ActRxnFormulas = [model.rxns(id_ActRxnNames) ActRxnFormulas];
-% nf_rxns = strcat('NF_', ActRxnFormulas(:,1));
 F_rxns = strcat('F_', ActRxnFormulas(:,1));
 R_rxns = strcat('R_', ActRxnFormulas(:,1));
-% [~, nb] = ismember(nf_rxns, model.varNames);
 [~, F_rxn_ids] = ismember(F_rxns, model.varNames);
 [~, R_rxn_ids] = ismember(R_rxns, model.varNames);
 net_fluxes = sol.x(F_rxn_ids) - sol.x(R_rxn_ids);

@@ -2,7 +2,6 @@ function model = convToTFBA_BNICE(model,ReactionDB)
 
 
 % % save the original direction reversibilities
-% orig_model_rev = model.rev;
 [num_mets_org, num_rxns] = size(model.S);
 
 % formatting the metabolite and reaction names to remove brackets
@@ -29,7 +28,6 @@ end
 % and create the Irrev version of the model
 
 % create the A matrix using the S matrix first
-
 [modelIrrev, ~, ~, ~] = convertToIrreversibleAgador(model);
 model.A = modelIrrev.S;
 [num_mets, num_vars] = size(modelIrrev.S);

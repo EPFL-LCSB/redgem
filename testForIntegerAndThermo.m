@@ -49,8 +49,7 @@ ActRxnNames = strrep(ActBVarNames, 'BFUSE_', '');
 LumpedSubnetworkModel = extractSubNetwork(LumpCstModel, ActRxnNames);
 LumpedSubnetworkModelWithexchangeTrans = isTrans_GEMS_MoreFields(LumpedSubnetworkModel, LumpedSubnetworkModel.mets);
 
-% If any of the active reactions is a drain (ATTENTION! HERE IT IS BASED ON STRING COMPARISON. SHOULDN'T WE MAKE
-% THIS BASED ON STOICHIOMETRY?!) make its index zero
+% If any of the active reactions is a drain make its index zero
 drains = extract_drains(GSM_ForLumping);
 for k = 1:length(ActRxnNames(find(id_ActRxnNames_i)))
     if ismember(ActRxnNames{k}, drains) 
@@ -60,10 +59,6 @@ end
  
 % Initialize the model
 kmodel = LumpCstModel;
- 
-% Find the bbbs
-% bbb_metnames = kmodel.mets(find(kmodel.S(:,find(kmodel.c))<0));
-%bbb_metnames = bbb_metnames(1:end-1); %%MARIA's EXPERIMENT
  
 bbb_metnames_and_GAM_c = [bbb_metnames; 'GAM_c'];
  
@@ -110,8 +105,6 @@ mini_model.rxnThermo(find(idRxnsInLumpCstModel)) = LumpCstModel.rxnThermo(idRxns
 mini_model.thermo_units = 'kcal/mol';
  
 % The function above puts thermo only to the core. The one below puts thermo to the entire system.
-% sol_obj = solveFBAmodelCplex(mini_model);
-% minObjSolVal = roundsd(sol_obj.f, 4, 'floor');
 mini_model.c = zeros(size(mini_model.c));
 mini_model.c(find_cell(['DM_',regexprep(bbb_metnames_and_GAM_c{i},'-','_')], mini_model.rxns)) = 1;
 mini_model.ub(find(mini_model.c)) = 10* UnitFactor;
@@ -190,25 +183,8 @@ tmini_model.objtype = 1;
 % Exchange the upper bounds of all forward and reverse fluxes (that
 % satisfy: 10^-6 < (F_x or R_x) < 1001) with 10^7
 indfr=getAllVar(tmini_model, {'F' 'R'});
-%tmini_model = changebounds_for_fluxesrGEM_FluxUnits(tmini_model, 10000000, UnitFactor);
-% Set up a constraint for each of the active reactions that ensures that there is a residual flux through the forward or reverse direction:
-%BFMER2_ActRxn_i: F_ActRxn_i + B_ActRxn_i > 1e-06
-tmini_model_orig=tmini_model;
-% [num_constr, ~] = size(tmini_model.A);
-% if length(forward) == length(backward)
-%     for z = 1:length(forward)
-%         tmini_model.rhs(num_constr+z, 1) = UnitFactor*1e-07;
-%         tmini_model.constraintNames{num_constr+z, 1} = strcat('BFMER2_',num2str(z));
-%         tmini_model.constraintType{num_constr+z, 1} = '>';
-%         tmini_model.A(num_constr+z, id_F(z)) = 1;
-%         tmini_model.A(num_constr+z, id_B(z)) = 1;
-%     end
-% else
-%     error('The number of forward and backward active fluxes is not the same!')
-% end
  
 % The hope is that the problem will be feasible with integer coefficients:
-
 tmini_model.var_ub(indfr)=1000*tmini_model.var_ub(indfr);
 tmini_model.var_lb(indfr)=1000*tmini_model.var_lb(indfr);
 

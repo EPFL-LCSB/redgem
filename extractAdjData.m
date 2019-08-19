@@ -76,10 +76,6 @@ function [selectedPaths, selectedPathsExternal, connecting_reactions, rxns_ss, m
 
 
 
-%% make sure subsystems are in model
-% core_ss = [core_ss; {'ETC_Rxns'}]; THIS WAS ADDED IN REDGEM MAIN BODY
-%core_ss = checkCoreSSNames(model,core_ss)
-
 %% Find the metabolites for each starting subsystem
 % Initialize cell structures
 rxns_ss = cell(length(core_ss),1);
@@ -101,16 +97,6 @@ if any(strcmp('ExtraCell',core_ss)) %If i chose to do extracell mets, save them 
     place = find(strcmp('ExtraCell',core_ss));
     placeCentral = find_cell(setdiff(core_ss,'ExtraCell'),core_ss);
     extraMets = mets_ss(place);
-    %     if strcmp('ecoli',Organism)
-    %         placeCentral = find(find_cell({'Citric Acid Cycle';'Pentose Phosphate Pathway';'Glycolysis/Gluconeogenesis';'Pyruvate Metabolism';'Glyoxylate Metabolism'} ,core_ss));
-    %     elseif strcmp('putida',Organism)
-    %         placeCentral = find(find_cell({'TCA Cycle','Pentose Phosphate Pathway','Gluconeogenesis','Glycolysis','Pyruvate Met','Oxidative Phosphorylation'},core_ss));
-    %     elseif strcmp('yeast7',Organism) || strcmp('yeast_iMM904',Organism)
-    %         placeCentral = find(find_cell({'Citric Acid Cycle','Pentose Phosphate Pathway','GlycolysisGluconeogenesis','Pyruvate Metabolism','ETC_Rxns'},core_ss));
-    %     else
-    %         warning('Organism not recognized for extracellular subsystem recognition')
-    %         placeCentral = find(find_cell(core_ss,core_ss));
-    %     end
 else
     placeCentral = find(find_cell(core_ss,core_ss));
 end
@@ -124,7 +110,6 @@ mets_ss(place) = [];
 core_ss(place)= [];
 end
 
-% end; clear place
 
 % Make one metabolite list as source, and the other as target:
 % - assign numbers to each subsystem, and form all pairs
@@ -166,16 +151,12 @@ if strcmp(ConnectIntraSubsystem, 'yes')
     end
 end
 
-% clear i
 
 %% get unique reactions and metabolites in the new model
 selectedPaths = pathsNum(L_DirAdjMatWn, L_DirAdjMatC, L_DirAdjMatMets, pairs, source_met, target_met, startFromMin, D, ApplyShortestDistanceOfSubsystems,ThrowErrorOnDViolation);
 
 if ~isempty(extraMets)
     selectedPaths.ModelMets
-    %     addedmets=unique( vertcat( selectedPaths.ModelMets{:}));
-    %     Central{1} = [CentralMets{1};addedmets];
-    %     CentralMets{1} = unique(Central{1});
     selectedPathsExternal = pathsNumExtra(L_DirAdjMatWn, L_DirAdjMatC, L_DirAdjMatMets, extraMets, 1, CentralMets, ApplyShortestDistanceOfSubsystems);
 else
     selectedPathsExternal=[];
@@ -201,8 +182,6 @@ if isfield(selectedPathsExternal,'ModelMets')
 else
     otherReactions=withconnectors;
 end
-% This is the final output of this script! The unique reaction list. Hope
-% you enjoy your journey, thank you for flying with LCSB Airlines.
 
 
 

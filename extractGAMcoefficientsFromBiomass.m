@@ -15,7 +15,7 @@ ppi = {'ppi_c'};
 FullS = full(model.S);
 
 if any(abs(FullS(find_cell(GAMmets,model.mets),idBiomass))==0)
-    error('Some of the metabolites has zero coefficient in the biomass!!')
+    error('Some of the metabolites have zero coefficient in the biomass!!')
 end
 GAMMetCoeffs = cellfun(@(x) num2str(x),num2cell(abs(FullS(find_cell(GAMmets,model.mets),idBiomass))),'UniformOutput',false);
 

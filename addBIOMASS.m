@@ -33,8 +33,6 @@ else
     error('Wrong option!')
 end
 
-% Set properly the desired parameters for cplex LP and MILP
-
 % This is the maximum theoretical yield under the particular media.
 sol_obj = solveFBAmodelCplex(GSM_ForLumping);
 muMax = sol_obj.f; %0.05;%CHANGED FOR HUMAN!!!!! THIS SHOULD BE AN INPUT IN REDGEM
@@ -112,24 +110,19 @@ end
 
 % - LumpCstModel is based on GSM_ForLumping, and has the following:
 %   (i) Adds demand-reactions (DM_) for all the biomass building blocks
-%   (ii) Includes the DM_GAM_c reaction that Meric added for feasibility
+%   (ii) Includes the DM_GAM_c reaction for feasibility
 %   (iii) Adds thermodynamic constraints for the core system, using
-%   convToTFBA_BBB (generates thermodynamic variables ONLY for the core system)
+%   convToTFA_BBB (generates thermodynamic variables ONLY for the core system)
 %   (iv) sets the upper bound of all fluxes based on the maximum allowable
-%   in the system, i.e.: 6* glucose uptake (i.e. 6*10=60 mmol/gDWhr) HAS TO
-%   CHANGE TO INCLUDE INPUT OF UPTAKE FLUX VALUE
+%   in the system, i.e.: 6* glucose uptake (i.e. 6*10=60 mmol/gDWhr)
 %   (v) includes or not constraints to align all transports for same met in
 %   same direction
 %   (vi) if it is AerobicAnaerobic (AerobicAnaerobic=1), allow oxygen
 %   (vii) create new binary variable that we will use to minimize the # of
 %   reactions in the lumped reaction
-%   (viii) now create constraint that is 1*F + 1*B + 60*BFUSE < 60.1
-%   interpretation: if BFUSE is on, F and B are off. We will maximize #
-%   of BFUSE to get the fewest active reactions. remember, here we havent
-%   added basal fluxes
-%   (ix) Meric added constraints to tighten the system. We force
-%   a minimal amount of flux through the lumped reaction which makes the
-%   solver operate much faster
+%   (viii) now create constraint that is 1*FU + 1*BU + BFUSE < 1
+%   interpretation: if BFUSE is on, FU and BU are off. We will maximize #
+%   of BFUSE to get the fewest active reactions.
 
 % This part added the hydrolysis reaction, but we have to make it automatic
 % for other genome scale models: Growth associated maintenance (GAM)
@@ -162,15 +155,11 @@ if LumpCstModel.var_lb(find(LumpCstModel.f)) > 0
 end
 LumpCstModel.lb(find(LumpCstModel.c))=0;
 LumpCstModel.ub(find(LumpCstModel.c))=0;
-%HAS TO CHANGE TO INCLUDE INPUT OF UPTAKE FLUX VALUE
-% LumpCstModel = changebounds_for_fluxes_FluxUnits(LumpCstModel, UnitFactor);%what does this do? it sets the upper bound of a flux # carbon * uptake of the carbon source.
-%for instance, if glucose uptake is 10 mmol/gDWhr, any flux cannot be bigger than 10*6
-%mmol/gDWhr.
 
-% > > > > > > > > > SAVING  WORKSPACE > > > > > > > > > > > > > > > > > > > > > > > > > > > > >
-[dateStr, timeStr] = getDateTimeStrings(date,clock);                                            %
+% > > > > > > > > > SAVING  WORKSPACE > > > > > > > > > > > > > > > > > > > > > >  > > > > > > >  > > > > >
+[dateStr, timeStr] = getDateTimeStrings(date,clock);                                                      %
 eval(['save ./TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_1.mat;'])    %
-% < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < <
+% < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < 
 
 %% Aligning the transport reactions that transport the same metabolite
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -203,40 +192,22 @@ else
     error('Wrong option')
 end
 
-% > > > > > > > > > SAVING  WORKSPACE > > > > > > > > > > > > > > > > > > > > > > > > > > > > >
-[dateStr, timeStr] = getDateTimeStrings(date,clock);                                            %
+% > > > > > > > > > SAVING  WORKSPACE > > > > > > > > > > > > > > > > > > > > > >  > > > > > > >  > > > > >
+[dateStr, timeStr] = getDateTimeStrings(date,clock);                                                      %
 eval(['save ./TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_2.mat;'])    %
-% < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < <
+% < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < 
 
 
 % Now keep all reactions in non-core metabolism that are not transports
 LumpCstModel.f = zeros(length(LumpCstModel.varNames),1);
 
-% Find index of all the reactions of the model in the non-core-reactions:
-% [~, bcore] = ismember(1:length(LumpCstModel.rxns), IdNCR);
-% mod_core = extractSubNetwork(LumpCstModel, LumpCstModel.rxns(find(bcore==0)));
 % Extract a subnetwork with only the core-reactions
 mod_core = extractSubNetwork(LumpCstModel, LumpCstModel.rxns(IdCR));
 mets_core = [mod_core.mets; bbb_metnames];
 LumpCstModel = isTrans_GEMS_MoreFields(LumpCstModel, mets_core);
 is_core_trans = LumpCstModel.isCoreTrans(IdNCR);
 % Keep only those Non-core reactions, that are also not transport reactions
-%is_ExcTrans = LumpCstModel.isExchangeTrans(IdNCR);
-% The index of non-core-reactions, AND!! non-transport-reactions of core metabolites:
 IdNCNTR   = IdNCR(is_core_trans==0);
-
-%keep in ind only those that arent exchange reactions SHOULD CHANGE THIS TO
-%LOOK AT MATRIX
-
-MiY7_DMs = LumpCstModel.rxns( find(checkDrainRxns(LumpCstModel)==1) );
-for i=1:length(LumpCstModel.rxns(IdNCNTR))
-    if ismember(LumpCstModel.rxns(IdNCNTR(i)), MiY7_DMs)
-        exch_pattern(i) = 0;
-    else
-        exch_pattern(i) = 1;
-    end
-end
-
 
 % These are the indices of the LumpCstModel that are NON-core, NOT
 % transport, and also NOT exchange reactions
@@ -252,13 +223,11 @@ backward = backward(IdNCNTNER);
 %the lumped reaction
 for i=1:length(IdNCNTNER)
     LumpCstModel.varNames(length(LumpCstModel.varNames)+1) = strcat('BFUSE_', LumpCstModel.rxns(IdNCNTNER(i)));
-    LumpCstModel.var_ub(length(LumpCstModel.varNames))=1;
-    LumpCstModel.var_lb(length(LumpCstModel.varNames))=0;
+    LumpCstModel.var_ub(length(LumpCstModel.varNames)) = 1;
+    LumpCstModel.var_lb(length(LumpCstModel.varNames)) = 0;
     LumpCstModel.vartypes(length(LumpCstModel.varNames)) = {'B'};
-    LumpCstModel.f(length(LumpCstModel.varNames))=1; %this line makes objective
-    %function function maximize BFUSE vars
+    LumpCstModel.f(length(LumpCstModel.varNames)) = 1; %this line makes objective function maximize BFUSE vars
 end
-
 
 % Find the indidces of the FUSE and BUSE variables:
 ind_fu = getAllVar(LumpCstModel, {'FU'});
@@ -342,22 +311,23 @@ bbb_drains=strrep(bbb_drains, '-', '_');
 [~, bmetttt]=ismember(bbb_drains, LumpCstModel.rxns);
 LumpCstModel.ub(bmetttt)=LumpCstModel.var_ub(ind_bbb_forward);
 
-% > > > > > > > > > SAVING  WORKSPACE > > > > > > > > > > > > > > > > > > > > > > > > > > > > >
-[dateStr, timeStr] = getDateTimeStrings(date,clock);                                            %
+% > > > > > > > > > SAVING  WORKSPACE > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > >
+[dateStr, timeStr] = getDateTimeStrings(date,clock);                                                      %
 eval(['save ./TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_3.mat;'])    %
-% < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < <
+% < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < 
+
 LumpCstModel.b_for_lumping=roundsd(-muMax * stoich_bbb,1, 'floor');
 
 for i = 1:length(bbb_metnames)%parfor i = 1:length(bbb_metnames)
     bbb_metnames{i}
+    
     if ~ismember(bbb_metnames{i}, bbb_not_to_lump)
+        
         dmodel = LumpCstModel;
         dmodel.var_ub(ind_bbb_backward(i)) = 0;
         dmodel.var_ub(ind_bbb_forward(i))  = UnitFactor * 10;
         dmodel.var_lb(ind_bbb_forward(i)) = roundsd(-muMax * stoich_bbb(i), 5, 'floor'); %negative because the coef is neg
-        % CHANGE this to -* maximum growth (which should be 1)
-        % dmodel.var_ub(ind_bbb_forward(i))= is free
-        % aplly choice
+        
         if strcmp(TimeLimitForSolver,'yes')
             sol = solveTFAmodelCplex(dmodel, TimeLimit, [], mipTolInt, emphPar, feasTol, scalPar, []);
         elseif strcmp(TimeLimitForSolver,'no')
@@ -366,7 +336,7 @@ for i = 1:length(bbb_metnames)%parfor i = 1:length(bbb_metnames)
             error('Wrong option!')
         end
         
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % Remember here we're maximizing BFUSE vars -> minimizing non-core metab rxns
         % lumps that can't solve are saved in error and nosol
         if isempty(sol.x)
@@ -382,7 +352,7 @@ for i = 1:length(bbb_metnames)%parfor i = 1:length(bbb_metnames)
                 rxnNames    = {'ProducedByCore'};
                 rxnFormulas = {'ProducedByCore'};
             else % there are reactions in the lump
-                % Change the DP name, because it is just a solution!!
+                
                 if NumAltLUMPedPerBBB>1
                     if strcmp(TimeLimitForSolver,'yes')
                         [DPs, ~, ~] = findDP_YIELD_TimeLimit(dmodel, NumAltLUMPedPerBBB, sol, allBFUSEind, TimeLimit, SizeLUMPNetwork, CplexParameters);
@@ -407,10 +377,10 @@ for i = 1:length(bbb_metnames)%parfor i = 1:length(bbb_metnames)
     end
 end
 
-% > > > > > > > > > SAVING  WORKSPACE > > > > > > > > > > > > > > > > > > > > > > > > > > > > >
-[dateStr, timeStr] = getDateTimeStrings(date,clock);                                            %
+% > > > > > > > > > SAVING  WORKSPACE > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > >
+[dateStr, timeStr] = getDateTimeStrings(date,clock);                                                      %
 eval(['save ./TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_4.mat;'])    %
-% < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < <
+% < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < <
 
 
 %%%%%%%%%%%%%%%% Printout For Troubleshooting %%%%%%%%%%%%%%%%
@@ -465,10 +435,10 @@ KeepTrackOfTransToBeCore_unique=setdiff(KeepTrackOfTransToBeCore, {'NA'});
 IdNCNTNER=setdiff(IdNCNTNER, ind_nc_tpt_to_be_core);
 end
 
-% > > > > > > > > > SAVING  WORKSPACE > > > > > > > > > > > > > > > > > > > > > > > > > > > > >
-[dateStr, timeStr] = getDateTimeStrings(date,clock);                                            %
+% > > > > > > > > > SAVING  WORKSPACE > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > >
+[dateStr, timeStr] = getDateTimeStrings(date,clock);                                                      %
 eval(['save ./TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_5.mat;'])    %
-% < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < <
+% < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < <
 
 % Remove the Lumped reactions that were not feasible
 idToRemove = find(strcmp(LumpedRxnFormulas,'NA'));
@@ -477,9 +447,9 @@ bbbNames(idToRemove) = [];
 activeRxns(idToRemove,:) = [];
 relaxedDGoVarsValues(idToRemove)=[];
 
-% > > > > > > > > > SAVING  WORKSPACE > > > > > > > > > > > > > > > > > > > > > > > > > > > > >
-[dateStr, timeStr] = getDateTimeStrings(date,clock);                                            %
+% > > > > > > > > > SAVING  WORKSPACE > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > >
+[dateStr, timeStr] = getDateTimeStrings(date,clock);                                                      %
 eval(['save ./TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_6.mat;'])    %
-% < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < <
+% < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < <
 
 end

@@ -55,7 +55,6 @@ model_for_extra.var_ub(ReRxns) = 0;
 
 %% Block the 'drains' for non-core mets
 % 1. Block all drains
-%addpath(genpath('/Users/maria/LCSB_Maria/MARIA_CODES/'));
 drains = extract_drains(model_for_extra);
 
 [~,Fdrains] = ismember(strcat('F_', drains),model_for_extra.varNames);
@@ -116,16 +115,7 @@ for i=1:length(fu_rxn)
     model_for_extra.vartypes(length(model_for_extra.varNames)) = {'B'};
     model_for_extra.f(length(model_for_extra.varNames)) = 1; 
 end
-%  
-% for i=1:length(fu_rxn)
-%     [num_constr,~] = size(model_for_extra.A);
-%     model_for_extra.rhs(num_constr+1,1) =  UnitFactor*60;
-%     model_for_extra.constraintNames{num_constr+1,1} = strcat('BFMER_',num2str(i));
-%     model_for_extra.constraintType{num_constr+1,1} = '<';
-%     model_for_extra.A(num_constr+1,fu_rxn(i)) = 1;
-%     model_for_extra.A(num_constr+1,bu_rxn(i)) = 1;
-%     model_for_extra.A(num_constr+1,num_vars+i) = 60;
-% end
+
 
 ind_bfuse=getAllVar(model_for_extra, {'BFUSE'});
 [num_constr,~] = size(model_for_extra.A);
@@ -144,9 +134,7 @@ end
 id_all = [];
 ExtraCellSubsystem_connect = GSM_ForLumping.ExtracellularMedium_connect;
 [~, bfor]=ismember(strcat('F_', ExtraCellSubsystem_connect), model_for_extra.varNames);
-% bfor = bfor(find(bfor));
 [~, bback]=ismember(strcat('R_', ExtraCellSubsystem_connect), model_for_extra.varNames);
-% bback = bback(find(bback));
 DPsAll = {};
 
 for i=1:length(ExtraCellSubsystem_connect)
@@ -249,7 +237,4 @@ id_all = id_all_dps_min;
 eval(['save ./TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_2.mat;'])  %
 % < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < <
 
-% ind_bfuse
-% sol_all_i = sol_all{i}
-% ind_other_rxns = ismember(other_rxns,GSM_ForLumping.rxns)
 end

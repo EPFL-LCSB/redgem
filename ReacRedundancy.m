@@ -8,9 +8,7 @@ S = M.S;
 % Find all the unique columns-entries of S, (OR row entries of S'), and set
 % them to x.
 [x,~] = unique(S','rows');
-% S(:,y) % this is x'
-% Are there any redundant/same reactions?
-% size(S,2)==size(x,1);
+
 % Find all the indices of the unique columns of the S'
 [~,x2] = ismember(S',x,'rows');
 % find the occurences of these unique columns
@@ -18,9 +16,8 @@ S = M.S;
 % which of these unique entries have more than 1 occurencies? These are the
 % reactions that are found at least two times in our model!
 [c,~] = ismember(S',x(a>1,:),'rows');
-% S(:,c);
 
-redundant_table = []
+redundant_table = [];
 if ~isempty(find(c))
     warning('Attention: The following reactions appear to be exactly the same. Please make sure that this is intentional! E.g. regulated by different gene')
     if isfield(M,'rxnNames')

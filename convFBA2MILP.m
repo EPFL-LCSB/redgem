@@ -2,11 +2,9 @@ function model = convFBA2MILP(model, ReactionDB)
 
 bigM = 1e3;
 % % save the original direction reversibilities
-% orig_model_rev = model.rev;
 [num_mets_org, num_rxns] = size(model.S);
 
 % formatting the metabolite and reaction names to remove brackets
-
 for i=1:num_mets_org
     newmetname = model.mets{i};
     newmetname = strrep(newmetname,'[','_');

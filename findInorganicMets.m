@@ -84,19 +84,8 @@ NotCpdID = find(cellfun(@isempty,regexp(model.metSEEDID(InorganicMetID),'cpd')))
 
 % If there exist metabolites without SEEDID, take action accordingly:
 if ~isempty(NotCpdID)
-%     fprintf('==========================================\n')
     warning('Some of the inorganic metabolites have no cpd-number:')
     InorgMetDetails(NotCpdID,:)
-%     prompt = ('(1) Continue with incomplete list of InorgMetSEEDIDs\n(2) Exit code with error\nchoose option and press enter: ');
-%     option12 = input(prompt);
-%     fprintf('==========================================\n')
-%     if option12 ==1
-%         % Just continue with incomplete list of InorgMetSEEDID
-%     elseif option12 ==2
-%         error('Some of the inorganic metabolites have no cpd-number!')
-%     else
-%         error('Wrong option!')
-%     end
 end
 
 % Find all the SEEDIDs without repetition, excluding the strings that

@@ -2,7 +2,6 @@ function met_pairs_to_remove=preparemetpairs(model, metpairs)
 m=1;
 compartments=unique(model.metCompSymbol);
 for i=1:length(metpairs(:,1))
-    i
     for j=1:length(compartments)
         met1=strcat(metpairs(i,1), '_', compartments(j));
         met2=strcat(metpairs(i,2), '_', compartments(j));

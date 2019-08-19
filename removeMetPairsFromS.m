@@ -12,7 +12,7 @@ Smatrix = model.S;
 
 if isa(inorganic,'double') % if the input is directly the met indeces
     inorganic_indices = inorganic;
-else % SHOULD ADD OTHER SCENARIOS
+else 
     inorganic_indices = find(ismember(model.metSEEDID, inorganic));
 end
 

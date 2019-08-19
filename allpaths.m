@@ -35,10 +35,7 @@ L_DirAdjMatMets=cell( [size(DirAdjMatC) L]);
 for i=1:size(DirAdjMatWn,1)  
     place{i}=unique(c1(ismember(r1,i)));
     for j=place{i}'
-        %if ~isempty( DirAdjMatC{i,j} )
-            L_DirAdjMatMets{i,j,1}=repmat([i;j],[1,length(DirAdjMatC{i,j})]);
-       % end
-        
+        L_DirAdjMatMets{i,j,1}=repmat([i;j],[1,length(DirAdjMatC{i,j})]);  
     end
 end
 clear i j
@@ -56,7 +53,7 @@ for i = 2:L
     else
         [rm, cm]=find(L_DirAdjMatWn(:,:,i-1));
     end
-    for firstMet = 1:size(DirAdjMatC,1);
+    for firstMet = 1:size(DirAdjMatC,1)
         for currentMet=unique(cm(ismember(rm,firstMet)))'
 
             prevMets=L_DirAdjMatMets{firstMet,currentMet,i-1};
@@ -65,9 +62,9 @@ for i = 2:L
 
             nextMets=place{currentMet};
             nextMets=setdiff(nextMets,union(prevMets, firstMet));%this prevents the path from repeating nodes
-            if ~isempty(nextMets);
+            if ~isempty(nextMets)
 
-                for nextMet=nextMets';   
+                for nextMet=nextMets'  
                 secondReacs=L_DirAdjMatC{currentMet,nextMet,1}; %second half of the transition taken from L_DirAdjMatWn 1
                 rep1=size(secondReacs,2);% # of second half connections
 
