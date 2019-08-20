@@ -1,4 +1,4 @@
-function [OriginalGEM, GEMmodel, core_ss, Biomass_rxns, met_pairs_to_remove, InorgMetSEEDIDs, BBBsToExclude, ExtraCellSubsystem] = case_yeast_iMM904(ZeroZeroGEMbounds, FluxUnits, ListForInorganicMets, ListForCofactorPairs, SelectedSubsystems, AddExtracellularSubsystem, DB_AlbertyUpdate)
+function [OriginalGEM, GEMmodel, core_ss, Biomass_rxns, met_pairs_to_remove, InorgMetSEEDIDs, BBBsToExclude, ExtraCellSubsystem, OxPhosSubsystem] = case_yeast_iMM904(ZeroZeroGEMbounds, FluxUnits, ListForInorganicMets, ListForCofactorPairs, SelectedSubsystems, AddExtracellularSubsystem, DB_AlbertyUpdate)
 
 % Model Specific Settings:
 fprintf('Loading the GEM for Yeast iMM904 ...\n')
@@ -7,6 +7,9 @@ GetModelFromGITresources(GEM_filename)
 GEMmodel = load(['./GEMs/',GEM_filename]);
 GEMmodel = GEMmodel.iMM904;
 OriginalGEM = GEMmodel;
+
+OxPhosSubsystem = 'Oxidative Phosphorylation';
+
 fprintf('For this model:\n')
 fprintf('- The core subsystems  are:\n')
 if iscell(SelectedSubsystems)

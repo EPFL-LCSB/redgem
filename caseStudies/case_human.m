@@ -1,4 +1,5 @@
-function [OriginalGEM, GEMmodel, core_ss, Biomass_rxns, met_pairs_to_remove, InorgMetSEEDIDs, BBBsToExclude, ExtraCellSubsystem] = case_human(GEMname, ZeroZeroGEMbounds, FluxUnits, ListForInorganicMets, ListForCofactorPairs, SelectedSubsystems, AddExtracellularSubsystem, DB_AlbertyUpdate)
+function [OriginalGEM, GEMmodel, core_ss, Biomass_rxns, met_pairs_to_remove, InorgMetSEEDIDs, BBBsToExclude, ExtraCellSubsystem, OxPhosSubsystem] = ...
+    case_human(GEMname, ZeroZeroGEMbounds, ListForInorganicMets, ListForCofactorPairs, SelectedSubsystems, DB_AlbertyUpdate)
 
 % Model Specific Settings:
 fprintf('Loading the GEM for human...\n')
@@ -10,6 +11,9 @@ GEMmodel.rxns(find(ismember(GEMmodel.rxns,'DM_atp_c'))) = {'ATPM'};
 GEMmodel.varNames(find(ismember(GEMmodel.varNames,'F_DM_atp_c'))) = {'F_ATPM'};
 GEMmodel.varNames(find(ismember(GEMmodel.varNames,'R_DM_atp_c'))) = {'R_ATPM'};
 OriginalGEM = GEMmodel;
+
+OxPhosSubsystem = 'Oxidative phosphorylation';
+
 fprintf('For this model:\n')
 fprintf('- The core subsystems  are:\n')
 if iscell(SelectedSubsystems)
@@ -18,39 +22,10 @@ elseif ischar(SelectedSubsystems) && strcmp(SelectedSubsystems, 'default')
     core_ss = {'Citric acid cycle'
     'Pentose phosphate pathway'
     'Glycolysis/gluconeogenesis'
-    'Pyruvate metabolism'
-    'Glyoxylate and dicarboxylate metabolism'
     'Oxidative phosphorylation'}
 else
     error('Error defining the subsystems!')
 end  
-
-if iscell(AddExtracellularSubsystem)
-    fprintf('- The extracellular subsystm includes the following reactions:\n')
-    ExtraCellSubsystem = AddExtracellularSubsystem;
-elseif ischar(AddExtracellularSubsystem) && strcmp(AddExtracellularSubsystem,'default')
-    fprintf('- The extracellular subsystm includes the following reactions:\n')
-    ExtraCellSubsystem = {'EX_succ_e'
-        'EX_ac_e'
-        'EX_etoh_e'
-        'EX_glyc_e'
-        'EX_lac_D_e'
-        'EX_akg_e'
-        'EX_for_e'
-        'EX_pyr_e'
-        'EX_co2_e'
-        'EX_mal_L_e'}
-elseif ischar(AddExtracellularSubsystem) && strcmp(AddExtracellularSubsystem,'no')
-    fprintf('- NO extracellular subsystem defined!')
-    ExtraCellSubsystem = [];
-elseif ischar(AddExtracellularSubsystem) && strcmp(AddExtracellularSubsystem,'automatic')
-    fprintf('Extracting the medium automatically from the GEM\n')
-    error('Pierre has started working on this, but needs to be tested!')
-    medium = get_medium(GEMmodel);
-    ExtraCellSubsystem = table2cell(medium(:,1));
-else
-    error('Error defining the ExtracellularSubsystem!')
-end
 
 fprintf('- The biomass reaction is:\n')
 Biomass_rxns = {'biomass'}
@@ -111,58 +86,8 @@ if ~isempty(idZeroZeroGEMbounds)
     end
 end
 
-if strcmp(FluxUnits,'mmol')
-    % Do nothing
-elseif strcmp(FluxUnits,'mumol') && strcmp(Organism,'ecoli')
-    GEMmodel.ub = UnitFactor*GEMmodel.ub;
-    GEMmodel.lb = UnitFactor*GEMmodel.lb;
-    % ATTENTION, THIS IS ONLY FOR THIS ECOLI GEM MODEL!!!!!
-    GEMmodel.S(:,[7 8]) = GEMmodel.S(:,[7 8])*UnitFactor;
-else
-    error('Wrong option!')
-end
-
-
-
-%% If metabolites appear in the biomass equation in more than one
-%% compartments (e.g. cytoplasmic and periplasmic)
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% In the biomass there are some metabolites that appear at the same
-% time in the cytoplasm and in the periplasm. This causes problems
-% because provided that the transports do not belong to the
-% non-core-reactions that are used for the lumping, we risk of
-% having exactly the same reaction for two different BBBs. This
-% creates problems of singularity later on in the non-linear
-% models. Find these  metabolites:
-
-
-bbbz = GEMmodel.mets(find(GEMmodel.S(:,find(GEMmodel.c))<0));
-bbbz_no_comp = cellfun(@(x) x(1:end-2),bbbz,'UniformOutput',false);
-[unique_bbbz_no_comp,order_unique ]= unique(bbbz_no_comp);
-[~,b] = ismember(bbbz_no_comp,unique_bbbz_no_comp);
-[c,d] = hist(b,unique(b));
-fprintf('The following metabolites appear as bbbs in more than one compartments in the biomass equation')
-CP_bbbz_no_comp = unique_bbbz_no_comp(d(find(c>1)))
-% Initialize BBBs to exclude:
-BBBsToExclude = [];
-for i=1:size(CP_bbbz_no_comp)
-    SameBBBsDifferentCs = bbbz(find_cell(CP_bbbz_no_comp(i),bbbz_no_comp));
-    DifferentCs = cellfun(@(x) {x(end)},SameBBBsDifferentCs);
-    if sum(ismember(DifferentCs,{'c','p'}),1)==2
-        % Check if there is a transport reaction between these metabilites
-        TransRxn_CP = GEMmodel.rxns(find(sum(abs(full(GEMmodel.S(find_cell(SameBBBsDifferentCs,GEMmodel.mets),:))),1)==2));
-        if ~isempty(TransRxn_CP)
-            % From this pair we keep track of the periplasmic BBB
-            % so that we can exclude it from the bbb-list. It will
-            % be produced by the transport.
-            BBBsToExclude = [BBBsToExclude SameBBBsDifferentCs(find_cell({'p'},DifferentCs))];
-            fprintf('There exists a transport reaction between the BBBs %s & %s, reaction: %s.\n Therefore we will not generate lumped reaction for %s\n',...
-                SameBBBsDifferentCs{1},SameBBBsDifferentCs{2},TransRxn_CP{1},SameBBBsDifferentCs{find_cell({'p'},DifferentCs)})
-        end
-    else
-        error('Are you sure your biomass equation is assigned correctly?')
-    end
-end
+BBBsToExclude = []; % there are not BBBs that we want to exclude for lumpGEM
+ExtraCellSubsystem = []; % no extracellular subsystem for this human case
 
 %%    Inorganic Metabolites
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

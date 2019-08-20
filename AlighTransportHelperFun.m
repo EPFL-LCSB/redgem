@@ -1,4 +1,4 @@
-function RedModel = AlighTransportHelperFun(RedModel, AlignTransportsUsingMatFile, checkgrowth, CplexParameters)
+function RedModel = AlighTransportHelperFun(RedModel, AlignTransportsUsingMatFile, checkgrowth, CplexParameters,biomassRxnNames,ATPsynth_RxnNames)
 
 if strcmp(AlignTransportsUsingMatFile,'yesautomatic')
     % Find the parallel-transport reactions, and the metabolites that these transport
@@ -17,7 +17,7 @@ if strcmp(AlignTransportsUsingMatFile,'yesautomatic')
             ModelToFindTrans = removeMetabolites(ModelToFindTrans, UnusedMets, false);
         end
     end
-    [AllTransports, TransportNoCouples, CoupledTransports, ImportantTransports, directions, TransportGroups] = identifyTransportRxns(ModelToFindTrans);
+    [AllTransports, TransportNoCouples, CoupledTransports, ImportantTransports, directions, TransportGroups] = identifyTransportRxns(ModelToFindTrans,biomassRxnNames,ATPsynth_RxnNames);
     rxns = [ImportantTransports(:,1) strcat(ImportantTransports(:,2), '_', ImportantTransports(:,3))];
     directions = ImportantTransports(:,4);
     directions = cell2mat(directions);

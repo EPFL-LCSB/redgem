@@ -139,24 +139,25 @@ switch Organism
     case 'ecoli'
         switch GEMname
             case 'iJO1366'
-                [OriginalGEM, GEMmodel, core_ss, Biomass_rxns, met_pairs_to_remove, InorgMetSEEDIDs, BBBsToExclude, ExtraCellSubsystem] = ...
+                [OriginalGEM, GEMmodel, core_ss, Biomass_rxns, met_pairs_to_remove, InorgMetSEEDIDs, BBBsToExclude, ExtraCellSubsystem, OxPhosSubsystem] = ...
                     case_ecoli_iJO1366(ZeroZeroGEMbounds, FluxUnits, ListForInorganicMets, ListForCofactorPairs, SelectedSubsystems, AddExtracellularSubsystem, DB_AlbertyUpdate);
+            otherwise
+            error('GEMname is WRONG!!')
         end
     case 'putida'
-        [OriginalGEM, GEMmodel, core_ss, Biomass_rxns, met_pairs_to_remove, InorgMetSEEDIDs, BBBsToExclude, ExtraCellSubsystem] = ...
+        [OriginalGEM, GEMmodel, core_ss, Biomass_rxns, met_pairs_to_remove, InorgMetSEEDIDs, BBBsToExclude, ExtraCellSubsystem, OxPhosSubsystem] = ...
             case_putida_iJN746(ZeroZeroGEMbounds, FluxUnits, ListForInorganicMets, ListForCofactorPairs, SelectedSubsystems, AddExtracellularSubsystem, DB_AlbertyUpdate);
     case 'human'
-        [OriginalGEM, GEMmodel, core_ss, Biomass_rxns, met_pairs_to_remove, InorgMetSEEDIDs, BBBsToExclude, ExtraCellSubsystem] = ...
-            case_human(GEMname, ZeroZeroGEMbounds, FluxUnits, ListForInorganicMets, ListForCofactorPairs, SelectedSubsystems, AddExtracellularSubsystem, DB_AlbertyUpdate);
+        [OriginalGEM, GEMmodel, core_ss, Biomass_rxns, met_pairs_to_remove, InorgMetSEEDIDs, BBBsToExclude, ExtraCellSubsystem, OxPhosSubsystem] = ...
+            case_human(GEMname, ZeroZeroGEMbounds, ListForInorganicMets, ListForCofactorPairs, SelectedSubsystems, DB_AlbertyUpdate);
     case 'yeast'
         switch GEMname
             case 'iMM904'
-                [OriginalGEM, GEMmodel, core_ss, Biomass_rxns, met_pairs_to_remove, InorgMetSEEDIDs, BBBsToExclude, ExtraCellSubsystem] = ...
+                [OriginalGEM, GEMmodel, core_ss, Biomass_rxns, met_pairs_to_remove, InorgMetSEEDIDs, BBBsToExclude, ExtraCellSubsystem, OxPhosSubsystem] = ...
                     case_yeast_iMM904(ZeroZeroGEMbounds, FluxUnits, ListForInorganicMets, ListForCofactorPairs, SelectedSubsystems, AddExtracellularSubsystem, DB_AlbertyUpdate);
             otherwise
                 error('GEMname is WRONG!!')
-        end
-  
+        end 
     otherwise
         error('Organism is WRONG!!')
 end
@@ -179,7 +180,7 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if strcmp(AddETCAsSubsystem,'yes')
     fprintf('The ETC has been added to the core subsystems\n')
-    GEMmodel = generate_ETC_SubSyst(GEMmodel);
+    GEMmodel = generate_ETC_SubSyst(GEMmodel,OxPhosSubsystem);
     core_ss = [core_ss; {'ETC_Rxns'}];
 elseif strcmp(AddETCAsSubsystem,'no')
     fprintf('The ETC has not been added to the core subsystems\n')
@@ -387,7 +388,9 @@ if strcmp(performLUMPGEM, 'yes')
     end
     
    
-    [activeRxns, LumpedRxnFormulas, bbbNames, DPsAll, IdNCNTNER, relaxedDGoVarsValues_ForEveryLumpedRxn] = addBIOMASS(GSM_ForLumping, otherReactionsGSMForLump_idx, DB_AlbertyUpdate, BBBsToExclude, AerobicAnaerobic, Organism, AlignTransportsUsingMatFile, TimeLimitForSolver, FluxUnits, NumOfLumped, CplexParameters, GEMname, RxnNames_PrevThermRelax);
+    [activeRxns, LumpedRxnFormulas, bbbNames, DPsAll, IdNCNTNER, relaxedDGoVarsValues_ForEveryLumpedRxn] = addBIOMASS(GSM_ForLumping, otherReactionsGSMForLump_idx, DB_AlbertyUpdate, BBBsToExclude, AerobicAnaerobic, ...
+                                                                                                                      Organism, AlignTransportsUsingMatFile, TimeLimitForSolver, FluxUnits, NumOfLumped, CplexParameters, ...
+                                                                                                                      GEMname, RxnNames_PrevThermRelax, Biomass_rxns, ATPsynth_RxnNames);
     
     % > > > > > > > > > SAVING  WORKSPACE > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > >
     [dateStr, timeStr] = getDateTimeStrings(date,clock);                                                      %
@@ -546,7 +549,7 @@ if strcmp(performPostProcessing, 'yes')
     % IN THE GENERATED-OUTPUT MODEL: Aligning the transport reactions that transport the same metabolite
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     checkgrowth = 1;
-    RedModel = AlighTransportHelperFun(RedModel,AlignTransportsUsingMatFile, checkgrowth, CplexParameters);
+    RedModel = AlighTransportHelperFun(RedModel,AlignTransportsUsingMatFile, checkgrowth, CplexParameters, Biomass_rxns, ATPsynth_RxnNames);
     
     % > > > > > > > > > SAVING  WORKSPACE > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > >
     [dateStr, timeStr] = getDateTimeStrings(date,clock);                                                      %

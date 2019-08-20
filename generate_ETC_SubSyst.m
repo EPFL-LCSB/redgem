@@ -1,4 +1,4 @@
-function model = generate_ETC_SubSyst(model)
+function model = generate_ETC_SubSyst(model, OxPhosSubsystem)
 
 all_mets={'cpd15560'	'cpd15561';
 'cpd15499'	'cpd15500';
@@ -33,7 +33,7 @@ end
 model.subSystems = MakeCellArraySearchable(model.subSystems,'None');
 model.subSystems(model.isETC==1) = {'ETC_Rxns'};
 
-[~, boxidative]=ismember(model.subSystems, 'Oxidative phosphorylation');
+[~, boxidative]=ismember(model.subSystems,OxPhosSubsystem);
 model.subSystems(find(boxidative))={'ETC_Rxns'};
 
 end

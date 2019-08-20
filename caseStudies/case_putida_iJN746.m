@@ -1,4 +1,4 @@
-function [OriginalGEM, GEMmodel, core_ss, Biomass_rxns, met_pairs_to_remove, InorgMetSEEDIDs, BBBsToExclude, ExtraCellSubsystem] = case_putida_iJN746(ZeroZeroGEMbounds, FluxUnits, ListForInorganicMets, ListForCofactorPairs, SelectedSubsystems, AddExtracellularSubsystem, DB_AlbertyUpdate)
+function [OriginalGEM, GEMmodel, core_ss, Biomass_rxns, met_pairs_to_remove, InorgMetSEEDIDs, BBBsToExclude, ExtraCellSubsystem, OxPhosSubsystem] = case_putida_iJN746(ZeroZeroGEMbounds, FluxUnits, ListForInorganicMets, ListForCofactorPairs, SelectedSubsystems, AddExtracellularSubsystem, DB_AlbertyUpdate)
 
 % Model Specific Settings:
 fprintf('Loading the GEM for Putida...\n')
@@ -7,6 +7,9 @@ GetModelFromGITresources(GEM_filename)
 GEMmodel = load(['./GEMs/',GEM_filename]);
 GEMmodel = GEMmodel.ttmodel;
 OriginalGEM = GEMmodel;
+
+OxPhosSubsystem = 'Oxidative phosphorylation';
+
 fprintf('For this model:\n')
 fprintf('- The core subsystems  are:\n')
 if iscell(SelectedSubsystems)

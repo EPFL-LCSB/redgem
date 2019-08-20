@@ -1,4 +1,4 @@
-function [activeRxns, LumpedRxnFormulas, bbbNames, DPsAll, IdNCNTNER, relaxedDGoVarsValues] = addBIOMASS(GSM_ForLumping, otherReactionsGSMForLump_idx, DB_AlbertyUpdate, BBBsToExclude, AerobicAnaerobic, Organism, AlignTransportsUsingMatFile, TimeLimitForSolver, FluxUnits, NumOfLumped, CplexParameters, GEMname, RxnNames_PrevThermRelax)
+function [activeRxns, LumpedRxnFormulas, bbbNames, DPsAll, IdNCNTNER, relaxedDGoVarsValues] = addBIOMASS(GSM_ForLumping, otherReactionsGSMForLump_idx, DB_AlbertyUpdate, BBBsToExclude, AerobicAnaerobic, Organism, AlignTransportsUsingMatFile, TimeLimitForSolver, FluxUnits, NumOfLumped, CplexParameters, GEMname, RxnNames_PrevThermRelax,biomassRxnNames,ATPsynth_RxnNames)
 % This function
 %
 % INPUTS
@@ -164,7 +164,7 @@ eval(['save ./TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_'
 %% Aligning the transport reactions that transport the same metabolite
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 checkgrowth = 0;
-LumpCstModel = AlighTransportHelperFun(LumpCstModel, AlignTransportsUsingMatFile, checkgrowth, CplexParameters);
+LumpCstModel = AlighTransportHelperFun(LumpCstModel, AlignTransportsUsingMatFile, checkgrowth, CplexParameters, biomassRxnNames, ATPsynth_RxnNames);
 
 
 %% Aerobic/Anaerobic
