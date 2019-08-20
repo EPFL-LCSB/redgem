@@ -183,7 +183,8 @@ tmini_model.objtype = 1;
 % Exchange the upper bounds of all forward and reverse fluxes (that
 % satisfy: 10^-6 < (F_x or R_x) < 1001) with 10^7
 indfr=getAllVar(tmini_model, {'F' 'R'});
- 
+tmini_model_orig=tmini_model;
+
 % The hope is that the problem will be feasible with integer coefficients:
 tmini_model.var_ub(indfr)=1000*tmini_model.var_ub(indfr);
 tmini_model.var_lb(indfr)=1000*tmini_model.var_lb(indfr);
