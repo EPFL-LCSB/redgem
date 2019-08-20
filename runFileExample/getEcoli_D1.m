@@ -1,51 +1,9 @@
-function getEcoli_D1(inputUserInitials)
-restoredefaultpath
-
-if ~exist('inputUserInitials','var')||isempty(inputUserInitials)
-    prompt  = 'Please type your initials (select from the list) and press enter. Which one are you? \n-BZ \n-GF \n-MA \n-MM \n ... ';
-    choices  = {'GF', 'BL', 'MA','MM'};
-    currentInitials = [];
-    while isempty(currentInitials)||~ismember(currentInitials, choices)
-        currentInitials = input(prompt,'s');
-    end
-else
-    currentInitials = inputUserInitials;
-end
-
-switch currentInitials
-    case 'GF'
-        redGEMlumpGEMpath = '/Users/georgiosfengos/Dropbox/SharedFolders/EPFL-LCSB/Projects/RedAndLumpGEM';
-        OUTPUTpath = '/Users/georgiosfengos/TEMP/redGEMlumpGEMOUTPUT';
-        CPLEX_PATH = '/Users/georgiosfengos/Applications/IBM/ILOG/CPLEX_Studio1271';
-    case 'BL'
-        redGEMlumpGEMpath = '/Users/Beatriz/Dropbox/RedAndLumpGEM';
-        OUTPUTpath = '/Users/Beatriz/Documents/redGEMOUTPUT';
-        CPLEX_PATH = '/Users/Beatriz/Applications/IBM/ILOG/CPLEX_Studio1271';
-    case 'MA'
-        redGEMlumpGEMpath = '';
-        OUTPUTpath = '';
-        CPLEX_PATH = '';
-    case 'MM'
-        redGEMlumpGEMpath = '';
-        OUTPUTpath = '';
-        CPLEX_PATH = '';
-    case 'LM'
-        redGEMlumpGEMpath = '';
-        OUTPUTpath = '';
-        CPLEX_PATH = '';
-    otherwise
-        error('Unknown user initials!!')
-end
-
-
-paramEcoli    = struct ('L',                                  6                                      ,... % 1,2,...
-                        'D',                                  1                                      ,... % 1,2,...
-                        'startFromMin',                       'no'                                   ,... % yes, no
-                        'viewStats',                          'no'                                   ,... % yes, no
-                        'Organism',                           'ecoli'                                ,... % ecoli, putida, putida butanol
-                        'GEMname',                            'iJO1366'                              ,... % iMM904, iJO1366, etc.
-                        'ListForInorganicMets',               'automatic'                            ,... % curated, automatic
-                        'ListForCofactorPairs',               'curated'                              ,... % curated, automatic
+function getEcoli_D1
+cd('./../')  %check where it is saved
+paramEcoli    = struct (...%model parameters
+                        'Organism',                           'ecoli'                                ,... % human, ecoli, putida
+                        'GEMname',                            'iJO1366'                              ,... % name of the GEM used (as it is saved in GEMs folder)
+                        'RedModelName',                       'EcoliD1Smin         '                 ,... % choose a name for the reduction
                         'SelectedSubsystems',                 {{'Citric Acid Cycle';
                                                                 'Pentose Phosphate Pathway';
                                                                 'Glycolysis/Gluconeogenesis';
@@ -64,26 +22,35 @@ paramEcoli    = struct ('L',                                  6                 
                                                                 'DM_co2_e';
                                                                 'DM_mal-L_e'}}                       ,... % no, default (default is defined in the organism&GEM case-file), customly defined in a cell e.g. {{'DM_x';'DM_y';'DM_z'}}
                         'AerobicAnaerobic',                   'aerobic'                              ,... % aerobic, anaerobic
-                        'AlignTransportsUsingMatFile',        'yesautomatic'                         ,... % yesusingmatfile, yesusingReducedmatfile, yesautomatic,no
-                        'TimeLimitForSolver',                 'yes'                                  ,... % yes, no
-                        'RemovePeriplasm',                    'no'                                   ,... % yes, no
+                        'ListForInorganicMets',               'automatic'                            ,... % curated, automatic
+                        'ListForCofactorPairs',               'curated'                              ,... % curated, automatic
+                        'ZeroZeroGEMbounds',                  'Original'                             ,... % Original, DefineCustom, OpenTo100      
+                        'FluxUnits',                          'mmol'                                 ,... % mmol, mumol, other      
+                        ...%redGEM parameters
+                        'L',                                  6                                      ,... % 1,2,...
+                        'D',                                  1                                      ,... % 1,2,...
+                        'startFromMin',                       'no'                                   ,... % yes, no
+                        'ThrowErrorOnDViolation',             'error'                                ,... % error/continue If any two subsystems cannont connect to the level D                           
                         'OnlyConnectExclusiveMets',           'no'                                   ,... % yes, no
                         'ConnectIntracellularSubsystems',     'yes'                                  ,... % yes, no
                         'ApplyShortestDistanceOfSubsystems',  'bothways'                             ,... % bothways,eachdirection'
-                        'RedModelName',                       'EcoliD1Smin'                          ,... % choose a name
-                        'ThrowErrorOnDViolation',             'error'                                ,... % error/continue If any two subsystems cannont connect to the level D                                                            
-                        'performLUMPING',                     'yes'                                  ,... % do we want to perform lumping or not?
-                        'PercentOfmuMaxForLumping',            100                                   ,... % Please specify the percentage of muMax that we should impose for the lumped reactions (100, 90, ..., 10, 0)
-                        'PreventBBBuptake',                   'no'                                   ,... % yes/no: if yes, do not allow uptake through any bbb drains.                        
-                        'ZeroZeroGEMbounds',                  'Original'                             ,... % Original, DefineCustom, OpenTo100      
-                        'ImposeThermodynamics',               'no'                                   ,... % would you loke to impose thermodynamic cnstraints? yes, no
+                        ...%redGEMX parameters 
+                        'performREDGEMX',                     'no'                                   ,... % yes, no
+                        'NumOfConnections',                   'OnePerMetE'                           ,... % OnePerMetE ,SminMetE
+                        ...%lumpGEM parameters
+                        'performLUMPGEM',                     'yes'                                  ,... % yes, no (do we want to perform lumping or not?)   
+                        'PreventBBBuptake',                   'no'                                   ,... % yes/no: if yes, do not allow uptake through any bbb drains.     
                         'NumOfLumped',                        'Smin'                                 ,... % OnePerBBB, Smin, Sminp1, Sminp2, Sminp3
+                        'AlignTransportsUsingMatFile',        'yesautomatic'                         ,... % yesusingmatfile, yesusingReducedmatfile, yesautomatic,no
+                        ...%postprocessing parameters
+                        'performPostProcessing',              'yes'                                  ,... % yes, no
+                        ...%solver parameters
+                        'TimeLimitForSolver',                 'yes'                                  ,... % yes, no
                         'CplexParameters',                    'LCSBDefault'                          ,... % CplexDefault, LCSBDefault
-                        'performPostProcessing',              'PP_removeBlockedRxns'                 ,... % No, PP_removeBlockedRxns
-                        'redGEMlumpGEMpath',                  redGEMlumpGEMpath                      ,... % Provide the full path of your redGEMlumpGEMpath folder
-                        'OUTPUTpath',                         OUTPUTpath                             ,... % Provide the full output path
-                        'CPLEX_PATH',                         CPLEX_PATH);
-cd(paramEcoli.redGEMlumpGEMpath);
+                        ....%paths to folders
+                        'CPLEX_PATH',                         'PATH/TO/CPLEX'                        ,... %provide path to CPLEX         
+                        'TFA_PATH',                           'PATH/TO/TFA'                          ,... %provide path to matTFA
+                        'thermo_data_PATH',                   'PATH/TO/THERMODATA/thermo_data.mat')  ;% Provide the path to the thermodynamic data (including the file name)
 redGEM(paramEcoli);
- 
+
 end
