@@ -2,14 +2,14 @@ function [RedModel, activeRxns, LumpedRxnFormulas, bbbNames, DPsAll, rxns] = red
 % This function generates a reduced model of a GEM (GEnomescale Model).
 %
 % INPUTS
-% - D: is an adjustable parameter indicating how far from each subsystem is
+% - L: is an adjustable parameter indicating how far from each subsystem is
 %   the algorithm allowed to search in order to find connections among
 %   the subsystems. More precicely, it indicates how distant, in terms of
 %   reactions, can the metabolites of any two core sybsystems be from any
 %   potential interconnecting metabolite.
-% - L: given that the algorithm has searched paths of up to length D, L
+% - D: given that the algorithm has searched paths of up to length L, D
 %   specifies how many lengths to include in the new model. if not
-%   specified, this is equal to D.
+%   specified, this is equal to L.
 % - startFromMin: default = 'yes'. if 'yes', indicates that the L's that are
 %   included in the model start at the shortest distance between subsystem
 %   pairs. if zero, the model is built with the first D=L levels regardless
@@ -23,7 +23,7 @@ function [RedModel, activeRxns, LumpedRxnFormulas, bbbNames, DPsAll, rxns] = red
 %   within a subsystem will be connected to eachother. if 'no', they will
 %   not be connected. default is 'no';
 %   ----------------------------------------------------------------------
-%   Example: D=10 L=4 startFromMin= 'yes'
+%   Example: L=10 D=4 startFromMin= 'yes'
 %   the adjacency matrix will be calculated up to length 10, but only the
 %   first 4 lengths that connect subsystems will be included. If subsystem
 %   A and B have a D=1 connection, then the paths of length 1:4 will be
@@ -106,12 +106,9 @@ end
 % Restore the default path
 restoredefaultpath
 
-user_str = regexp(GITpath,'[\\/]Users[\\/](\w+)[\\/]','tokens');
-user_str = user_str{1}{1};
-
 % Add required paths:
 % - Cobra and the tFBA path
-addpath(genpath(fullfile(GITpath,'matTFA_c4science')))
+addpath(genpath(TFA_PATH))
 
 % - Cplex path
 addpath(genpath(CPLEX_PATH))
@@ -132,7 +129,7 @@ changeCobraSolver('cplex_direct','LP')
 %% %%%%%%%%%%%%%%%%%%%%%%
 
 % Load the thermodynamic database used
-load DB_AlbertyUpdate_keng.mat
+load(thermo_data_PATH)
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Set the properties of the GEM that is reduced %
@@ -240,20 +237,20 @@ f = filesep;
 eval(['save ./TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_2.mat;'])    %
 % < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < <
 
-if D~=0 % if we want to connect subsystems
+if L~=0 % if we want to connect subsystems
     fprintf('Calculating paths that connect subsystems\n')
     
     % To obtain paths that connect subsystems, create the adjacency matrix and associated matrices
     [~, DirAdjMatWn, DirAdjMatC] = adjacentFromStoich_150218(GSM_ForAdjMat);
     
-    [D_DirAdjMatWn, D_DirAdjMatC, D_DirAdjMatMets] = allpaths(D, DirAdjMatWn, DirAdjMatC);
+    [L_DirAdjMatWn, L_DirAdjMatC, L_DirAdjMatMets] = allpaths(L, DirAdjMatWn, DirAdjMatC);
     kk=1;
     ind=[];
-    for i=2:D
-        for j=1:size(D_DirAdjMatC,1)
-            for k=1:size(D_DirAdjMatC,2)
-                rxns=D_DirAdjMatC(j,k,i);
-                mets=D_DirAdjMatMets(j,k,i);
+    for i=2:L
+        for j=1:size(L_DirAdjMatC,1)
+            for k=1:size(L_DirAdjMatC,2)
+                rxns=L_DirAdjMatC(j,k,i);
+                mets=L_DirAdjMatMets(j,k,i);
                 if ~(isempty(cell2mat(rxns)))
                     rxns=cell2mat(rxns);
                     mets=cell2mat(mets);
@@ -271,11 +268,11 @@ if D~=0 % if we want to connect subsystems
                         rxns_new(:, ind)=[];
                         mets_new(:, ind)=[];
                     end
-                    D_DirAdjMatC{j,k,i}=rxns_new;
-                    D_DirAdjMatMets{j,k,i}=mets_new;
+                    L_DirAdjMatC{j,k,i}=rxns_new;
+                    L_DirAdjMatMets{j,k,i}=mets_new;
                     
                     if length(ind)==size(rxns,2)
-                        D_DirAdjMatWn(j,k,i)=0;
+                        L_DirAdjMatWn(j,k,i)=0;
                     end
                     ind=[];
                     kk=1;
@@ -283,9 +280,9 @@ if D~=0 % if we want to connect subsystems
             end
         end
     end
-    eval(['structAllpaths_',Organism,'_D',num2str(D),'.ListForInorganicMets = ListForInorganicMets;'])
-    eval(['structAllpaths_',Organism,'_D',num2str(D),'.ListForCofactorPairs = ListForCofactorPairs;'])
-    eval(['save ' connectingpaths_folder f 'structAllpaths_',Organism,'_D',num2str(D),'.mat structAllpaths_',Organism,'_D',num2str(D),' DirAdjMatWn D_DirAdjMatWn D_DirAdjMatC D_DirAdjMatMets'])
+    eval(['structAllpaths_',Organism,'_L',num2str(D),'.ListForInorganicMets = ListForInorganicMets;'])
+    eval(['structAllpaths_',Organism,'_L',num2str(D),'.ListForCofactorPairs = ListForCofactorPairs;'])
+    eval(['save ' connectingpaths_folder f 'structAllpaths_',Organism,'_L',num2str(D),'.mat structAllpaths_',Organism,'_L',num2str(D),' DirAdjMatWn L_DirAdjMatWn L_DirAdjMatC L_DirAdjMatMets'])
     clear DirAdjMatWn DirAdjMatC %these two are included in countD and connectD
 
     
@@ -295,8 +292,7 @@ if D~=0 % if we want to connect subsystems
     % < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < <
     
     % to select the reactions that join subsystems, extract the information.
-    [selectedPaths, selectedPathsExternal, connecting_reactions, rxns_ss, mets_ss, otherReactions] = extractAdjData(GSM_ForAdjMat,core_ss,D_DirAdjMatWn, D_DirAdjMatC, D_DirAdjMatMets,L,startFromMin,OnlyConnectExclusiveMets,ConnectIntracellularSubsystems,ApplyShortestDistanceOfSubsystems,ThrowErrorOnDViolation);
-    
+    [selectedPaths, selectedPathsExternal, connecting_reactions, rxns_ss, mets_ss, otherReactions] = extractAdjData(GSM_ForAdjMat,core_ss,L_DirAdjMatWn, L_DirAdjMatC, L_DirAdjMatMets,D,startFromMin,OnlyConnectExclusiveMets,ConnectIntracellularSubsystems,ApplyShortestDistanceOfSubsystems,ThrowErrorOnDViolation);    
     % > > > > > > > > > SAVING  WORKSPACE > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > >
     [dateStr, timeStr] = getDateTimeStrings(date,clock);                                                      %
     eval(['save ./TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_4.mat;'])    %
@@ -310,8 +306,7 @@ else %% No Connections
         [~, rxns_ss{i}]=ismember(GSM_ForAdjMat.subSystems, core_ss{i});
         rxns_ss{i}=find(rxns_ss{i});
     end
-    
-    
+       
 end
 
 
@@ -333,7 +328,7 @@ end
 clear k;
 
 
-if strcmp(performLUMPING, 'yes')
+if strcmp(performLUMPGEM, 'yes')
     
     otherReactions = setdiff(1:length(GSM_ForLumping.rxns),core_rxns);
 
@@ -373,7 +368,7 @@ if strcmp(performLUMPING, 'yes')
     eval(['save ./TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_5.mat;'])    %
     % < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < <
     
-    if strcmp(ConnectExtracellularToCore,'yes')
+    if strcmp(performREDGEMX,'yes')
         fprintf('Connecting the metabolites from the extracellular medium to the core\n')
         % connect extracellular subsystem to core
         [ConnectExtrCell_rxns_all, ConnectExtrCell_id_all, sol_all] = redGEMX(rxns_ss, GSM_ForLumping, GSM_ForAdjMat, OriginalGEM, GEMmodel, UnitFactor, Organism, GEMname, NumOfConnections, CplexParameters);
@@ -385,7 +380,7 @@ if strcmp(performLUMPING, 'yes')
         eval(['save ./TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_5a.mat;'])   %
         % < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < <
 
-    elseif strcmp(ConnectExtracellularToCore,'no')
+    elseif strcmp(performREDGEMX,'no')
         fprintf('The metabolites from the extracellular medium were not connected to the core\n')
     else
         error('Wrong option!')
@@ -444,7 +439,7 @@ if strcmp(performLUMPING, 'yes')
     %%% UP TO HERE IS THE REDUCED MODEL GENERATION. AFTER THIS POINT IS JUST
     %%% POST PROCESSING
     
-elseif strcmp(performLUMPING, 'no')
+elseif strcmp(performLUMPGEM, 'no')
     fprintf('We do not perform lumping')
     % Set empty values to outputs
     activeRxns = [];
@@ -465,36 +460,17 @@ RedModel.core_model = extractSubNetwork(GEMmodel, GEMmodel.rxns(core_rxns));
 eval(['save ./TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_8.mat;'])    %
 % < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < <
 
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%      11         PPPPP    PPPPP
-%     1 1         P    P   P    P
-%    1  1         P    P   P    P
-%       1         PPPPP    PPPPP
-%       1         P        P
-%    111111       P        P
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%% ->->->->->->  1st   P O S T     P R O C E S S I N G ->->->->-> %%%%%%%
+%%%%%%% ->->->->->->->  P O S T    P R O C E S S I N G ->->->->->-> %%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Remove Blocked reactions (in FBA and TFA)
 
-if strcmp(performPostProcessing, 'PP_removeBlockedRxns') || ...
-        strcmp(performPostProcessing, 'PP_forMCA')
-    
-    
-    %% Removing the periplasmic compartment from the reduced model
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    if strcmp(RemovePeriplasm,'yes')
-        RedModel = mergeModelCompartments_150218(RedModel);
-    elseif strcmp(RemovePeriplasm,'no')
-        fprintf('The periplasmic compartment was not removed\n')
-    else
-        error('Wrong option!')
-    end
-    
-    %% Run fluxVariability analysis, and remove all those reactions that are
-    %% unable to carry any flux, while the model is still able to produce
-    %% biomass:
+if strcmp(performPostProcessing, 'yes')
+        
+    % Run fluxVariability analysis, and remove all those reactions that are
+    % unable to carry any flux, while the model is still able to produce biomass:
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Set growth bounds of reduced model to original GEM growth bounds:
     origGEM_growth_LB = OriginalGEM.lb(find_cell(RedModel.rxns(find(RedModel.c)), OriginalGEM.rxns));
@@ -505,19 +481,17 @@ if strcmp(performPostProcessing, 'PP_removeBlockedRxns') || ...
     RedModel.lb(find(RedModel.c)) = origGEM_growth_LB*UnitFactor;
     RedModel.ub(find(RedModel.c)) = origGEM_growth_UB*UnitFactor;
     
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % We set a MINIMAL BOUND FOR GROWTH of 10% max growth to avoid deleting reactions
     % preventing growth !!!!!!
     temp_FBASol = solveFBAmodelCplex(RedModel);
     RedModel.lb(find(RedModel.c))=temp_FBASol.f*0.1;
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    
+
     FBA_minmax = runMinMax(RedModel);
     FVA_BlockedRxnIds = find(abs(FBA_minmax(:,1))<feasTol & abs(FBA_minmax(:,2))<feasTol);
     FVA_BlockedRxnNames = RedModel.rxns(FVA_BlockedRxnIds);
     warning(['Using FVA we find that ',num2str(size(RedModel.rxns(FVA_BlockedRxnIds),1)),' reactions appear to be blocked'])
     warning('We remove these reactions!')
-    rxns_to_remove = RedModel.rxns(FVA_BlockedRxnIds)
+    rxns_to_remove = RedModel.rxns(FVA_BlockedRxnIds);
     sol_obj = solveFBAmodelCplex(RedModel);
     k = 1;
     problematic_zero_minmax = {};
@@ -569,8 +543,7 @@ if strcmp(performPostProcessing, 'PP_removeBlockedRxns') || ...
     eval(['save ./TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_10.mat;'])   %
     % < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < <
     
-    %% IN THE GENERATED-OUTPUT MODEL: Aligning the transport reactions that
-    %% transport the same metabolite
+    % IN THE GENERATED-OUTPUT MODEL: Aligning the transport reactions that transport the same metabolite
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     checkgrowth = 1;
     RedModel = AlighTransportHelperFun(RedModel,AlignTransportsUsingMatFile, checkgrowth, CplexParameters);
@@ -581,19 +554,16 @@ if strcmp(performPostProcessing, 'PP_removeBlockedRxns') || ...
     % < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < <
     
     
-    %% Run Thermodynamic-fluxVariability analysis, and remove all those
-    %% reactions that are unable to carry any flux, while the model is still
-    %% able to produce biomass:
+    % Run Thermodynamic-fluxVariability analysis, and remove all those
+    % reactions that are unable to carry any flux, while the model is still
+    % able to produce biomass:
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % First we need to add the net-flux variables. They are
     RedModel = addNetFluxVariables(RedModel);
-    % DO  NOT ADD BASAL FLUXES HERE!!! WE WANT ZERO FLUXES!!!!
     
     temp_TFASol = solveTFAmodelCplex(RedModel);
     RedModel.var_lb(find(RedModel.f))=temp_TFASol.val*0.7;
-    
-    
-    
+        
     NFids = getAllVar(RedModel,{'NF'});
     TFVA_BlockedRxnNames = [];
     Tminmax = runTMinMax(RedModel,RedModel.varNames(NFids),30);
@@ -635,7 +605,7 @@ if strcmp(performPostProcessing, 'PP_removeBlockedRxns') || ...
         end
     end
     
-    % Now convert again to tFBA
+    % Now convert again to tFA
     RedModel = prepModelforTFA(RedModel, DB_AlbertyUpdate, GEMmodel.CompartmentData, false, false);
     verboseFlag = false;
     [RedModel, relaxedDGoVarsValues_inPP1b] = convToTFA(RedModel, DB_AlbertyUpdate, [], 'DGo', [], [], [], [], verboseFlag);
@@ -664,61 +634,9 @@ elseif strcmp(performPostProcessing, 'no')
 else
     error('Wrong post-processing option!')
 end
-%%%% <-<-<-<-<-<-<-  1st   P O S T     P R O C E S S I N G <-<-<-<-<-< %%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%    2222         PPPPP    PPPPP
-%   2    2        P    P   P    P
-%        2        P    P   P    P
-%       2         PPPPP    PPPPP
-%      2          P        P
-%   2222222       P        P
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%% ->->->->->->  2nd   P O S T     P R O C E S S I N G ->->->->-> %%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Prepare for MCA
-
-if strcmp(performPostProcessing, 'PP_forMCA')
-    switch Organism
-        case 'ecoli'
-            switch GEMname
-                case 'iJO1366'
-                    RedModel = redGEM2MCA_ecoli_iJO1366(GEMmodel,RedModel,CplexParameters,AlignTransportsUsingMatFile,Organism,verboseFlag, GEMname);
-                    
-                case 'iAF1260'
-                    error('Specific function is not yet implemented!')
-                otherwise
-                    error('GEMname is WRONG!!')
-            end
-        case 'putida'
-            error('Specific function is not yet implemented!')
-        case 'human'
-            error('Specific function is not yet implemented!')
-        case 'yeast7'
-            error('Specific function is not yet implemented!')
-        case 'yeast_iMM904'
-            error('Specific function is not yet implemented!')
-        otherwise
-            error('Organism is WRONG!!')
-    end
-    
-    % > > > > > > > > > SAVING  WORKSPACE > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > >
-    [dateStr, timeStr] = getDateTimeStrings(date,clock);                                                      %
-    eval(['save ./TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_14.mat;'])   %
-    % < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < <
-    
-elseif strcmp(performPostProcessing, 'no') || strcmp(performPostProcessing, 'PP_removeBlockedRxns')
-    fprintf('No post-processing for MCA!\n')
-else
-    error('Wrong post-processing option!')
-end
-%%%% <-<-<-<-<-<-<-  2nd   P O S T     P R O C E S S I N G <-<-<-<-<-< %%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %   OOOOO    U    U  TTTTT  PPPPP  U    U  TTTTT
 %  O     O   U    U    T    P    P U    U    T
@@ -744,9 +662,6 @@ model_name = [RedModelName,'_',dateStr,'_',timeStr];
 % Keep the original GEM from which the reduced model has been derived
 RedModel.OriginalGEM = OriginalGEM;
 
-% % Keep the name of the main metabolic task (e.g. biomass reaction)
-% RedModel.ObjRxn = ObjRxn;
-
 % Store in the model some of the properties of the reduction
 RedModel.ReductionProperties = paramRedGEM;
 
@@ -762,6 +677,8 @@ RedModel.description = [RedModelName,'_Date_',dateStr,'_',timeStr,'_Generated_by
 RedModel.solverPath = CPLEX_PATH;
 
 % Add a field with the name of the user that generated this model
+user_str = regexp(pwd,'[\\/]Users[\\/](\w+)[\\/]','tokens');
+user_str = user_str{1}{1};
 RedModel.GeneratedByUser = user_str;
 
 %% Saving
