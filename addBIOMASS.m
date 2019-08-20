@@ -209,6 +209,17 @@ is_core_trans = LumpCstModel.isCoreTrans(IdNCR);
 % Keep only those Non-core reactions, that are also not transport reactions
 IdNCNTR   = IdNCR(is_core_trans==0);
 
+%keep in ind only those that arent exchange reactions 
+
+EX_rxns = extract_drains(LumpCstModel);
+for i=1:length(LumpCstModel.rxns(IdNCNTR))
+    if ismember(LumpCstModel.rxns(IdNCNTR(i)), EX_rxns)
+        exch_pattern(i) = 0;
+    else
+        exch_pattern(i) = 1;
+    end
+end
+
 % These are the indices of the LumpCstModel that are NON-core, NOT
 % transport, and also NOT exchange reactions
 IdNCNTNER = IdNCNTR(find(exch_pattern));
