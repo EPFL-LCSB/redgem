@@ -27,15 +27,19 @@ RedGEMOpts =  struct (...
     'performREDGEMX',                      [],... %(19)%yes, no                    
     'NumOfConnections',                    [],... %(20)% OnePerMetE ,SminMetE
     'performLUMPGEM',                      [],... %(21)% do we want to perform lumping or not?
-    'PreventBBBuptake',                    [],... %(22)% yes/no: if yes, do not allow uptake through any bbb drains.
-    'NumOfLumped',                         [],... %(23)% OnePerBBB, Smin, Sminp1, Sminp2, Sminp3
-    'AlignTransportsUsingMatFile',         [],... %(24)% yesusingmatfile, yesusingReducedmatfile,yesautomatic,no
-    'performPostProcessing',               [],... %(25)% no, PP_forMCA, PP_removeBlockedRxns
-    'TimeLimitForSolver',                  [],... %(26)% yes, no
-    'CplexParameters',                     [],... %(27)% CplexDefault, LCSBDefault, redGEM_m7, redGEM_m8
-    'CPLEX_PATH',                          [],... %(28)% Provide your CPLEX path
-    'TFA_PATH',                            [],... %(29)% Provide your GIT-path
-    'thermo_data_PATH',                    []...  %(30)% Provide the path to the thermodynamic data (including the file name)
+    'PercentOfmuMaxForLumping',            [],... %(22)% What is the percentage of muMax that we should impose for the lumped reactions?
+    'addGAM',                              [],... %(23)% Would you like to extract and add to the reduced model a growth associated maintenance (GAM) reaction? yes, no 
+    'PreventBBBuptake',                    [],... %(24)% yes/no: if yes, do not allow uptake through any bbb drains.
+    'NumOfLumped',                         [],... %(25)% OnePerBBB, Smin, Sminp1, Sminp2, Sminp3
+    'AlignTransportsUsingMatFile',         [],... %(26)% yesusingmatfile, yesusingReducedmatfile,yesautomatic,no
+    'ImposeThermodynamics',                [],... %(27)% yes, no
+    'performPostProcessing',               [],... %(28)% no, PP_forMCA, PP_removeBlockedRxns
+    'TimeLimitForSolver',                  [],... %(29)% yes, no
+    'CplexParameters',                     [],... %(30)% CplexDefault, LCSBDefault, redGEM_m7, redGEM_m8
+    'CPLEX_PATH',                          [],... %(31)% Provide your CPLEX path
+    'TFA_PATH',                            [],... %(32)% Provide your GIT-path
+    'thermo_data_PATH',                    [],... %(33)% Provide the path to the thermodynamic data (including the file name)
+    'output_PATH',                         []...  %(34)% Provide an output Path 
     );
 
 
@@ -129,33 +133,45 @@ choices{20} = {'OnePerMetE', 'SminMetE'};
 %%%%%%%%% 21: 'performLUMPGEM' %%%%%%%%%%%%%%%%%%%%
 prompt{21}  = 'Do you want to perform lumping?\n- yes \n- no';
 choices{21} = {'yes', 'no'};
-%%%%%%%%% 22: 'PreventBBBuptake' %%%%%%%%%%%%%%%%%%%%
-prompt{22}  = 'Do you want to prevent uptake through the drains that go to bbbs directly?\n- yes \n- no';
-choices{22} = {'yes', 'no'};
-%%%%%%%%% 23: 'NumOfLumped' %%%%%%%%%%%%%%%%%%%%
-prompt{23}  = 'How many lumped reactions should be generated?\n- One per bbb \n- Entire Smin network \n- Entire Smin+1 network \n- Entire Smin+2 network';
-choices{23} = {'OnePerBBB', 'Smin', 'Sminp1', 'Sminp2', 'Sminp3'};
-%%%%%%%%% 24: 'AlignTransportsUsingMatFile' %%%%%%%%%%%%%%%%%%%%
-prompt{24}  = 'Do you want to align the transport the same metabolites?\n- yes : find these reactions and add constraints to align them\n- no : proceed without additional constraints';
-choices{24} = {'yesusingmatfile','yesusingReducedmatfile','yesautomatic','no'};
-%%%%%%%%% 25: 'PostProcessingForMCA' %%%%%%%%%%%%%%%%%%%%
-prompt{25}  = 'Would you like to perform post-processing after the generation of the redGEM? Do you want just to  to prepare the model for MCA analysis? \n- no \n- PP_forMCA \n- PP_removeBlockedRxns';
-choices{25} = {'no', 'PP_forMCA', 'PP_removeBlockedRxns'};
-%%%%%%%%% 26: 'TimeLimitForSolver' %%%%%%%%%%%%%%%%%%%%
-prompt{26}  = 'Do you want to use a time-limit for the solver?\n- yes\n- no';
-choices{26} = {'yes', 'no'};
-%%%%%%%%% 27: 'CplexParameters' %%%%%%%%%%%%%%%%%%%%
-prompt{27}  = 'What parameters would you like to have for the cplex-solver?\n- Default cplex (e.g. tol 1e-6)? \n- Default LCSB (e.g. tol 1e-9)?';
-choices{27} = {'CplexDefault', 'LCSBDefault', 'redGEM_m7', 'redGEM_m8'};
-%%%%%%%%% 28: 'TFA_PATH' %%%%%%%%%%%%%%%%%%%%
-prompt{28}  = 'Provide the path of your TFA-folder?';
-choices{28} = {'StringComment'};
-%%%%%%%%% 29: 'CPLEX_PATH' %%%%%%%%%%%%%%%%%%%%
-prompt{29}  = 'Provide the path of your CPLEX @Cplex folder?';
-choices{29} = {'StringComment'};
-%%%%%%%%% 30: 'thermo_data_PATH' %%%%%%%%%%%%%%%%%%%%
-prompt{30}  = 'Provide the path of the thermodynamic data (including the file name)?';
-choices{30} = {'StringComment'};
+%%%%%%%%% 22: 'PercentOfmuMaxForLumping' %%%%%%%%%%%%%%%%%%%%
+prompt{22}  = 'Please specify the percentage of muMax that we should impose for the lumped reactions (100, 90, ..., 10, 0)';
+choices{22} = 'GE0Int'; % integer greater or equal to zero
+%%%%%%%%% 23: 'addGAM' %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+prompt{23}  = 'Would you like to extract and add to the reduced model a growth associated maintenance (GAM) reaction?\n- yes \n- no';
+choices{23} = {'yes', 'no'};
+%%%%%%%%% 24: 'PreventBBBuptake' %%%%%%%%%%%%%%%%%%%%
+prompt{24}  = 'Do you want to prevent uptake through the drains that go to bbbs directly?\n- yes \n- no';
+choices{24} = {'yes', 'no'};
+%%%%%%%%% 25: 'NumOfLumped' %%%%%%%%%%%%%%%%%%%%
+prompt{25}  = 'How many lumped reactions should be generated?\n- One per bbb \n- Entire Smin network \n- Entire Smin+1 network \n- Entire Smin+2 network';
+choices{25} = {'OnePerBBB', 'Smin', 'Sminp1', 'Sminp2', 'Sminp3'};
+%%%%%%%%% 26: 'AlignTransportsUsingMatFile' %%%%%%%%%%%%%%%%%%%%
+prompt{26}  = 'Do you want to align the transport the same metabolites?\n- yes : find these reactions and add constraints to align them\n- no : proceed without additional constraints';
+choices{26} = {'yesusingmatfile','yesusingReducedmatfile','yesautomatic','no'};
+%%%%%%%%% 27: 'ImposeThermodynamics' %%%%%%%%%%%%%%%%%%%%
+prompt{27}  = 'Would you like to impose thermodynamic constraints?\n- yes \n- no';
+choices{27} = {'yes', 'no'};
+%%%%%%%%% 28: 'PostProcessingForMCA' %%%%%%%%%%%%%%%%%%%%
+prompt{28}  = 'Would you like to perform post-processing after the generation of the redGEM? Do you want just to  to prepare the model for MCA analysis? \n- no \n- PP_forMCA \n- PP_removeBlockedRxns';
+choices{28} = {'no', 'PP_forMCA', 'PP_removeBlockedRxns'};
+%%%%%%%%% 29: 'TimeLimitForSolver' %%%%%%%%%%%%%%%%%%%%
+prompt{29}  = 'Do you want to use a time-limit for the solver?\n- yes\n- no';
+choices{29} = {'yes', 'no'};
+%%%%%%%%% 30: 'CplexParameters' %%%%%%%%%%%%%%%%%%%%
+prompt{30}  = 'What parameters would you like to have for the cplex-solver?\n- Default cplex (e.g. tol 1e-6)? \n- Default LCSB (e.g. tol 1e-9)?';
+choices{30} = {'CplexDefault', 'LCSBDefault', 'redGEM_m7', 'redGEM_m8'};
+%%%%%%%%% 31: 'TFA_PATH' %%%%%%%%%%%%%%%%%%%%
+prompt{31}  = 'Provide the path of your TFA-folder?';
+choices{31} = {'StringComment'};
+%%%%%%%%% 32: 'CPLEX_PATH' %%%%%%%%%%%%%%%%%%%%
+prompt{32}  = 'Provide the path of your CPLEX @Cplex folder?';
+choices{32} = {'StringComment'};
+%%%%%%%%% 33: 'thermo_data_PATH' %%%%%%%%%%%%%%%%%%%%
+prompt{33}  = 'Provide the path of the thermodynamic data (including the file name)?';
+choices{33} = {'StringComment'};
+%%%%%%%%% 34: 'output_PATH' %%%%%%%%%%%%%%%%%%%%
+prompt{34}  = 'Provide an output path?';
+choices{34} = {'StringComment'};
 
 % Add a short string asking to press enter after the input choice:
 prompt = cellfun(@(x) [x,'\nchoose option and press enter: '],prompt,'UniformOutput',false)';
