@@ -31,7 +31,7 @@ while ((num_sols < maxNumEPs) && ~(isempty(sol)))
         model.rhs(num_cons+1) = 0.5;
         model.constraintNames{num_cons+1} = ['CUT_' num2str(num_sols)];
         model.constraintType{num_cons+1} = '>';
-        sol = solveTFBAmodelCplex(model, TimeLimitSecs, [], mipTolInt, emphPar, feasTol, scalPar, []);
+        sol = solveTFAmodelCplex(model, TimeLimitSecs, [], mipTolInt, emphPar, feasTol, scalPar, []);
 
         if isempty(sol.x)
             break;

@@ -135,5 +135,5 @@ elseif strcmp(ListForCofactorPairs,'automatic')
 else
     error('Wrong option!')
 end
-GEMmodel=prepModelforTFBA(GEMmodel, DB_AlbertyUpdate, GEMmodel.CompartmentData);
+GEMmodel=prepModelforTFA(GEMmodel, DB_AlbertyUpdate, GEMmodel.CompartmentData);
 end

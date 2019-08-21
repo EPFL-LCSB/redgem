@@ -31,7 +31,7 @@ else
     error('Wrong option for ImposeThermodynamics')
 end
 
-sol = solveTFBAmodelCplex(model,[],[],mipTolInt,emphPar,feasTol,scalPar,[]);
+sol = solveTFAmodelCplex(model,[],[],mipTolInt,emphPar,feasTol,scalPar,[]);
 % Set lower biomass production
 model.var_lb(find(model.f))=minPercent*sol.val;
 
