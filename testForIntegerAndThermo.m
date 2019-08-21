@@ -1,4 +1,6 @@
-function [bbbName_i, id_ActRxnNames_i, ActiveRxnsFormulas_i, LumpedRxnFormulas_i, relaxedDGoVarsValues_i, KeepTrackOfTransToBeCore] = testForIntegerAndThermo(LumpCstModel, GSM_ForLumping, DB_AlbertyUpdate, allBFUSEind, DPs_ij, muMax, IdNCNTNER, i, otherReactionsGSMForLump_idx, FluxUnits, CplexParameters, bbb_metnames, RxnNames_PrevThermRelax)
+function [bbbName_i, id_ActRxnNames_i, ActiveRxnsFormulas_i, LumpedRxnFormulas_i, relaxedDGoVarsValues_i, KeepTrackOfTransToBeCore] = ...
+    testForIntegerAndThermo(LumpCstModel, GSM_ForLumping, DB_AlbertyUpdate, allBFUSEind, DPs_ij, muMax, IdNCNTNER, i, ...
+    otherReactionsGSMForLump_idx, FluxUnits, CplexParameters, bbb_metnames, RxnNames_PrevThermRelax, addGAM, ImposeThermodynamics)
 % INPUT
 % - LumpCstModel:
 % - GSM_ForLumping:
@@ -29,6 +31,7 @@ elseif strcmp(FluxUnits,'mumol')
 else
     error('Wrong option!')
 end
+
 flag=0;
 % Set properly the desired parameters for cplex LP and MILP
 [mipTolInt, scalPar, feasTol, emphPar] = setCplexParamHelper(CplexParameters);
@@ -60,7 +63,6 @@ end
 % Initialize the model
 kmodel = LumpCstModel;
  
-bbb_metnames_and_GAM_c = [bbb_metnames; 'GAM_c'];
  
 % Extract the metabolites of the core model. To do this we find the complement of the non-core
 % reactions in the kmodel (LumpCstModel).
@@ -87,22 +89,33 @@ rxns_coreTransOrExch = kmodel.rxns(find(IdNCNTNER_inKmodel==0));
 % Create the abovementioned mini model, which consists of (1), (2) & (3)
 mini_model = extractSubNetwork(kmodel, [ActRxnNames; rxns_coreTransOrExch; strcat('DM_', bbb_metnames)]);
  
-% Extract the Growth Associated Maintenance (GAM) reaction and add it to
-% this mini model:
-[GAMequation, ppi_equation] = extractGAMcoefficientsFromBiomass(LumpCstModel);
-mini_model = addReaction(mini_model, 'DM_GAM_c', GAMequation);
-mini_model.lb(length(mini_model.rxns)) = 0;
-if strcmp('GAM_c',bbb_metnames_and_GAM_c{i})
-    mini_model.ub(length(mini_model.rxns)) = 100;
+% Add the Growth Associated Maintenance (GAM) reaction to this mini model:
+if strcmp(addGAM, 'yes')
+    GAM_c = 'GAM_c';
+    % Extract the Growth Associated Maintenance (GAM) reaction to add it
+    % later to the mini model:
+    [GAMequation, ppi_equation] = extractGAMcoefficientsFromBiomass(LumpCstModel);
+    bbb_metnames_and_GAM_c = [bbb_metnames; GAM_c];
+    mini_model = addReaction(mini_model, 'DM_GAM_c', GAMequation);
+    mini_model.lb(length(mini_model.rxns)) = 0;
+    if strcmp('GAM_c',bbb_metnames_and_GAM_c{i})
+        mini_model.ub(length(mini_model.rxns)) = 100;
+    else
+        mini_model.ub(length(mini_model.rxns)) = 0;
+    end
 else
-    mini_model.ub(length(mini_model.rxns)) = 0;
+    bbb_metnames_and_GAM_c = bbb_metnames;
+	GAM_c = [];
+    GAMequation = [];
 end
- 
-% Assure that the mini model will have thermodynamic information in the same way as the GSM_ForLumping.
-LumpCstModel.rxnThermo(1:length(GSM_ForLumping.rxns)) = GSM_ForLumping.rxnThermo;
-[~, idRxnsInLumpCstModel] = ismember(mini_model.rxns, LumpCstModel.rxns);
-mini_model.rxnThermo(find(idRxnsInLumpCstModel)) = LumpCstModel.rxnThermo(idRxnsInLumpCstModel(find(idRxnsInLumpCstModel)));
-mini_model.thermo_units = 'kcal/mol';
+
+if strcmp(ImposeThermodynamics, 'yes')
+    % Assure that the mini model will have thermodynamic information in the same way as the GSM_ForLumping.
+    LumpCstModel.rxnThermo(1:length(GSM_ForLumping.rxns)) = GSM_ForLumping.rxnThermo;
+    [~, idRxnsInLumpCstModel] = ismember(mini_model.rxns, LumpCstModel.rxns);
+    mini_model.rxnThermo(find(idRxnsInLumpCstModel)) = LumpCstModel.rxnThermo(idRxnsInLumpCstModel(find(idRxnsInLumpCstModel)));
+    mini_model.thermo_units = 'kcal/mol';
+end
  
 % The function above puts thermo only to the core. The one below puts thermo to the entire system.
 mini_model.c = zeros(size(mini_model.c));
@@ -114,20 +127,29 @@ if FBAsolMiniModel < 10^-6
     disp(['Why is the maximum attainable FBA-flux for the drain of the bbb %s so small (<10^-6)?!?!', bbb_metnames_and_GAM_c{i}])
 end
  
-verboseFlag = false;
-% When we converted the model to TFA (at the top of addBIOMASS.m) in order
-% to find the maximum yield, we had to relax the thermodynamics of the
-% following reactions:
-if ~isempty(LumpCstModel.relaxedDGoVarsValues)
-    relaxedDGoOfRxns = regexprep(LumpCstModel.relaxedDGoVarsValues(:,1),'^DGo_','');
+
+if strcmp(ImposeThermodynamics, 'yes')
+    verboseFlag = false;
+    % When we converted the model to TFA (at the top of addBIOMASS.m) in order
+    % to find the maximum yield, we had to relax the thermodynamics of the
+    % following reactions:
+    if ~isempty(LumpCstModel.relaxedDGoVarsValues)
+        relaxedDGoOfRxns = regexprep(LumpCstModel.relaxedDGoVarsValues(:,1),'^DGo_','');
+    else
+        relaxedDGoOfRxns = [];
+    end
+    % Now we convert again the model to TFA, without adding thermodynamic
+    % constraints for these reactions:
+    [tmini_model, relaxedDGoVarsValues_i] = convToTFA(mini_model, DB_AlbertyUpdate, relaxedDGoOfRxns, 'NO', RxnNames_PrevThermRelax, FBAsolMiniModel, [], [], verboseFlag);
+elseif strcmp(ImposeThermodynamics, 'no')
+    fprintf('In the current case we do not impose thermodynamic constraints\n')
+    tmini_model = convFBA2MILP(mini_model, DB_AlbertyUpdate);
+    relaxedDGoVarsValues_i = [];
 else
-    relaxedDGoOfRxns = [];
+    error('Wrong option for ImposeThermodynamics')
 end
-% Now we convert again the model to TFA, without adding thermodynamic
-% constraints for these reactions:
-[tmini_model, relaxedDGoVarsValues_i] = convToTFA(mini_model, DB_AlbertyUpdate, relaxedDGoOfRxns, 'NO', RxnNames_PrevThermRelax, FBAsolMiniModel, [], [], verboseFlag);
  
-bbb_drains_forward = strcat('F_DM_', [bbb_metnames; 'GAM_c']);
+bbb_drains_forward = strcat('F_DM_', [bbb_metnames; GAM_c]);
 bbb_drains_forward = strrep(bbb_drains_forward, '-', '_');
 [~, ind_bbb_forward] = ismember(bbb_drains_forward, tmini_model.varNames);
  
