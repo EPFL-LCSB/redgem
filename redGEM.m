@@ -51,19 +51,6 @@ if isempty(varargin)
     varargin = {'NoInput'};
 end
 
-if ~exist(fullfile('.','UserOutputs'),'dir')
-    mkdir('UserOutputs')
-end
-
-if ~exist(fullfile('.','UserOutputs/RunTimes'),'dir')
-    mkdir('UserOutputs/RunTimes')
-end
-
-connectingpaths_folder = fullfile('.','UserOutputs','ConnectingPaths');
-if ~exist(connectingpaths_folder,'dir')
-    mkdir(connectingpaths_folder)
-end
-
 % Set all non-specified flags to empty. In this way, whatever has not been
 % specified by the "varargin", will be later on asked with individual
 % questions. All the variables that have been specified in "varargin" will
@@ -74,17 +61,23 @@ end
 % Assign the value names to all the parameters of the current redGEM run
 eval(cell2mat(cellfun(@(x) [x,'= getfield(paramRedGEM,''',x,''');'],paramNames,'UniformOutput', false)'));
 
-if ~exist(fullfile('.',['TEMP/WorkSpaces/',Organism,'/',GEMname]),'dir')
-    mkdir(['TEMP/WorkSpaces/',Organism,'/',GEMname])
+if ~exist([output_PATH,'/TEMP/WorkSpaces/',Organism,'/',GEMname],'dir')
+    mkdir([output_PATH,'/TEMP/WorkSpaces/',Organism,'/',GEMname])
 end
 
-if ~exist(['./UserOutputs/Models/',Organism],'dir')
-    mkdir(['./UserOutputs/Models/',Organism])
+if ~exist([output_PATH,'/UserOutputs/RunTimes'],'dir')
+    mkdir([output_PATH,'/UserOutputs/RunTimes'])
 end
 
-if ~exist('./GEMs/','dir')
-    mkdir('./GEMs/')
+connectingpaths_folder = [output_PATH,'/UserOutputs/ConnectingPaths'];
+if ~exist(connectingpaths_folder,'dir')
+    mkdir(connectingpaths_folder)
 end
+
+if ~exist([output_PATH,'/UserOutputs/Models/',Organism],'dir')
+    mkdir([output_PATH,'/UserOutputs/Models/',Organism])
+end
+
 
 % We use the version of the convToTFA assumes that the flux is in
 % mu-mol/(gDW*h): convToTFA_FluxUnits
@@ -135,32 +128,9 @@ load(thermo_data_PATH)
 %% Set the properties of the GEM that is reduced %
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-switch Organism
-    case 'ecoli'
-        switch GEMname
-            case 'iJO1366'
-                [OriginalGEM, GEMmodel, core_ss, Biomass_rxns, met_pairs_to_remove, InorgMetSEEDIDs, BBBsToExclude, ExtraCellSubsystem, OxPhosSubsystem] = ...
-                    case_ecoli_iJO1366(ZeroZeroGEMbounds, FluxUnits, ListForInorganicMets, ListForCofactorPairs, SelectedSubsystems, AddExtracellularSubsystem, DB_AlbertyUpdate);
-            otherwise
-            error('GEMname is WRONG!!')
-        end
-    case 'putida'
-        [OriginalGEM, GEMmodel, core_ss, Biomass_rxns, met_pairs_to_remove, InorgMetSEEDIDs, BBBsToExclude, ExtraCellSubsystem, OxPhosSubsystem] = ...
-            case_putida_iJN746(ZeroZeroGEMbounds, FluxUnits, ListForInorganicMets, ListForCofactorPairs, SelectedSubsystems, AddExtracellularSubsystem, DB_AlbertyUpdate);
-    case 'human'
-        [OriginalGEM, GEMmodel, core_ss, Biomass_rxns, met_pairs_to_remove, InorgMetSEEDIDs, BBBsToExclude, ExtraCellSubsystem, OxPhosSubsystem] = ...
-            case_human(GEMname, ZeroZeroGEMbounds, ListForInorganicMets, ListForCofactorPairs, SelectedSubsystems, DB_AlbertyUpdate);
-    case 'yeast'
-        switch GEMname
-            case 'iMM904'
-                [OriginalGEM, GEMmodel, core_ss, Biomass_rxns, met_pairs_to_remove, InorgMetSEEDIDs, BBBsToExclude, ExtraCellSubsystem, OxPhosSubsystem] = ...
-                    case_yeast_iMM904(ZeroZeroGEMbounds, FluxUnits, ListForInorganicMets, ListForCofactorPairs, SelectedSubsystems, AddExtracellularSubsystem, DB_AlbertyUpdate);
-            otherwise
-                error('GEMname is WRONG!!')
-        end 
-    otherwise
-        error('Organism is WRONG!!')
-end
+eval(['[OriginalGEM, GEMmodel, core_ss, Biomass_rxns, met_pairs_to_remove, InorgMetSEEDIDs, BBBsToExclude, ExtraCellSubsystem, OxPhosSubsystem] = '...
+    'case_',Organism,'_',GEMname,'(ZeroZeroGEMbounds, FluxUnits, ListForInorganicMets, ListForCofactorPairs, SelectedSubsystems, AddExtracellularSubsystem, DB_AlbertyUpdate);'])
+
 %%
 % Model Reaction Redundancy Check
 redundant_table = ReacRedundancy(GEMmodel);
@@ -206,9 +176,15 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 GSM_ForLumping = GEMmodel;
 
+if strcmp(ImposeThermodynamics, 'no')
+    % Remove unnecessary thermo fields (if they exist). If not, functions
+    % like the extractSubnetwork might have an error.
+    GSM_ForLumping = removeThermoFields(GSM_ForLumping);
+end
+
 % > > > > > > > > > SAVING  WORKSPACE > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > >
 [dateStr, timeStr] = getDateTimeStrings(date,clock);                                                      %
-eval(['save ./TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_1.mat;'])    %
+eval(['save ',output_PATH,'/TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_1.mat;'])    %
 % < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < <
 
 %% Connecting Subsystems
@@ -235,7 +211,7 @@ f = filesep;
 
 % > > > > > > > > > SAVING  WORKSPACE > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > >
 [dateStr, timeStr] = getDateTimeStrings(date,clock);                                                      %
-eval(['save ./TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_2.mat;'])    %
+eval(['save ',output_PATH,'/TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_2.mat;'])    %
 % < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < <
 
 if L~=0 % if we want to connect subsystems
@@ -289,14 +265,14 @@ if L~=0 % if we want to connect subsystems
     
     % > > > > > > > > > SAVING  WORKSPACE > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > >
     [dateStr, timeStr] = getDateTimeStrings(date,clock);                                                      %
-    eval(['save ./TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_3.mat;'])    %
+    eval(['save ',output_PATH,'/TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_3.mat;'])    %
     % < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < <
     
     % to select the reactions that join subsystems, extract the information.
     [selectedPaths, selectedPathsExternal, connecting_reactions, rxns_ss, mets_ss, otherReactions] = extractAdjData(GSM_ForAdjMat,core_ss,L_DirAdjMatWn, L_DirAdjMatC, L_DirAdjMatMets,D,startFromMin,OnlyConnectExclusiveMets,ConnectIntracellularSubsystems,ApplyShortestDistanceOfSubsystems,ThrowErrorOnDViolation);    
     % > > > > > > > > > SAVING  WORKSPACE > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > >
     [dateStr, timeStr] = getDateTimeStrings(date,clock);                                                      %
-    eval(['save ./TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_4.mat;'])    %
+    eval(['save ',output_PATH,'/TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_4.mat;'])    %
     % < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < <
     
 else %% No Connections
@@ -366,7 +342,7 @@ if strcmp(performLUMPGEM, 'yes')
     
     % > > > > > > > > > SAVING  WORKSPACE > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > >
     [dateStr, timeStr] = getDateTimeStrings(date,clock);                                                      %
-    eval(['save ./TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_5.mat;'])    %
+    eval(['save ',output_PATH,'/TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_5.mat;'])    %
     % < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < <
     
     if strcmp(performREDGEMX,'yes')
@@ -378,7 +354,7 @@ if strcmp(performLUMPGEM, 'yes')
         
         % > > > > > > > > > SAVING  WORKSPACE > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > >
         [dateStr, timeStr] = getDateTimeStrings(date,clock);                                                      %
-        eval(['save ./TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_5a.mat;'])   %
+        eval(['save ',output_PATH,'/TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_5a.mat;'])   %
         % < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < <
 
     elseif strcmp(performREDGEMX,'no')
@@ -388,27 +364,33 @@ if strcmp(performLUMPGEM, 'yes')
     end
     
    
-    [activeRxns, LumpedRxnFormulas, bbbNames, DPsAll, IdNCNTNER, relaxedDGoVarsValues_ForEveryLumpedRxn] = addBIOMASS(GSM_ForLumping, otherReactionsGSMForLump_idx, DB_AlbertyUpdate, BBBsToExclude, AerobicAnaerobic, ...
-                                                                                                                      Organism, AlignTransportsUsingMatFile, TimeLimitForSolver, FluxUnits, NumOfLumped, CplexParameters, ...
-                                                                                                                      GEMname, RxnNames_PrevThermRelax, Biomass_rxns, ATPsynth_RxnNames);
+    [activeRxns, LumpedRxnFormulas, bbbNames, DPsAll, IdNCNTNER, relaxedDGoVarsValues_ForEveryLumpedRxn] = ...
+        addBIOMASS(GSM_ForLumping, otherReactionsGSMForLump_idx, DB_AlbertyUpdate, BBBsToExclude, AerobicAnaerobic, ...
+      Organism, AlignTransportsUsingMatFile, TimeLimitForSolver, FluxUnits, NumOfLumped, CplexParameters, ...
+      GEMname, RxnNames_PrevThermRelax, Biomass_rxns, ATPsynth_RxnNames, addGAM, PercentOfmuMaxForLumping, ...
+      ImposeThermodynamics, output_PATH);
     
     % > > > > > > > > > SAVING  WORKSPACE > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > >
     [dateStr, timeStr] = getDateTimeStrings(date,clock);                                                      %
-    eval(['save ./TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_6.mat;'])    %
+    eval(['save ',output_PATH,'/TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_6.mat;'])    %
     % < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < <
     
     [~, indCORE] = ismember(1:length(GSM_ForLumping.rxns), IdNCNTNER);
     indCORE = find(indCORE==0);
-    [RedModel, rxns ,info_LMDP] = add_lumped_reactions(GSM_ForLumping, LumpedRxnFormulas, bbbNames, DB_AlbertyUpdate, GSM_ForLumping.rxns(indCORE), UnitFactor, CplexParameters, Organism, GEMname,activeRxns);
+    [RedModel, rxns ,info_LMDP] = ...
+        add_lumped_reactions(GSM_ForLumping, LumpedRxnFormulas, bbbNames, DB_AlbertyUpdate, ...
+        GSM_ForLumping.rxns(indCORE), UnitFactor, CplexParameters, Organism, GEMname, activeRxns, output_PATH);
     
     if ~isempty(rxns)
         error('Additional reactions are required for growth!!')
     end
     
-    RedModel.info_Econnect = [OriginalGEM.ExtracellularMedium_connect ConnectExtrCell_rxns_all'];
+    if strcmp(performREDGEMX, 'yes')
+        RedModel.info_Econnect = [OriginalGEM.ExtracellularMedium_connect ConnectExtrCell_rxns_all'];
+    end
     % > > > > > > > > > SAVING  WORKSPACE > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > >
     [dateStr, timeStr] = getDateTimeStrings(date,clock);                                                      %
-    eval(['save ./TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_7.mat;'])    %
+    eval(['save ',output_PATH,'/TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_7.mat;'])    %
     % < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < <
     
     %add ATPm reaction. With the tightening ATPM is probably already incuded
@@ -460,7 +442,7 @@ RedModel.core_model = extractSubNetwork(GEMmodel, GEMmodel.rxns(core_rxns));
 
 % > > > > > > > > > SAVING  WORKSPACE > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > >
 [dateStr, timeStr] = getDateTimeStrings(date,clock);                                                      %
-eval(['save ./TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_8.mat;'])    %
+eval(['save ',output_PATH,'/TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_8.mat;'])    %
 % < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < <
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -517,7 +499,7 @@ if strcmp(performPostProcessing, 'yes')
     clear k
     % > > > > > > > > > SAVING  WORKSPACE > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > >
     [dateStr, timeStr] = getDateTimeStrings(date,clock);                                                      %
-    eval(['save ./TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_9.mat;'])    %
+    eval(['save ',output_PATH,'/TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_9.mat;'])    %
     % < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < <
     
     %% Convert the reduced model to TFBA
@@ -543,7 +525,7 @@ if strcmp(performPostProcessing, 'yes')
     
     % > > > > > > > > > SAVING  WORKSPACE > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > >
     [dateStr, timeStr] = getDateTimeStrings(date,clock);                                                      %
-    eval(['save ./TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_10.mat;'])   %
+    eval(['save ',output_PATH,'/TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_10.mat;'])   %
     % < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < <
     
     % IN THE GENERATED-OUTPUT MODEL: Aligning the transport reactions that transport the same metabolite
@@ -553,7 +535,7 @@ if strcmp(performPostProcessing, 'yes')
     
     % > > > > > > > > > SAVING  WORKSPACE > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > >
     [dateStr, timeStr] = getDateTimeStrings(date,clock);                                                      %
-    eval(['save ./TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_11.mat;'])   %
+    eval(['save ',output_PATH,'/TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_11.mat;'])   %
     % < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < <
     
     
@@ -573,45 +555,26 @@ if strcmp(performPostProcessing, 'yes')
     TFVA_BlockedRxnIds = find(abs(Tminmax(:,1))<feasTol & abs(Tminmax(:,2))<feasTol);
     if ~isempty(TFVA_BlockedRxnIds)
         warning(['Using TFVA we find that ',num2str(size(RedModel.rxns(TFVA_BlockedRxnIds),1)),' reactions appear to be blocked, so we remove these reactions!'])
-        TFVA_BlockedRxnNames = RedModel.varNames(NFids(TFVA_BlockedRxnIds));
-        % Consequently, some metabolites will be removed too, because they will
-        % not be used in any reactions now. Instead of removing those
-        % metabolites directly by using "metFlag = true" in the removeRxns, we
-        % instead set the flag to false and remove them afterwards, to make
-        % sure that corresponding fields such as metSEEDID are removed correctly.
-        sol_obj = solveFBAmodelCplex(RedModel);
-        minObjSolVal = roundsd(sol_obj.f, 4, 'floor');
-        k=1;
-        rxns_to_remove = strrep(RedModel.rxns(TFVA_BlockedRxnIds),'NF_','');
-        problematic_zero_minmax_thermo = {};
-        NOT_BLOCKED_TFA=[]; % TMinMax can sometimes give zero min max for a net flux even though we can actually impose a flux across it manually
+        TFVA_BlockedRxnNames = cellfun(@(x) x(4:end), RedModel.varNames(NFids(TFVA_BlockedRxnIds)), 'UniformOutput', false);
+        k = 1;
+        problematic_zero_minmax = {};
         for i = 1:length(RedModel.rxns(TFVA_BlockedRxnIds))
             RedModel_orig = RedModel;
-            RedModel = removeRxns(RedModel,rxns_to_remove(i));
-            try
-                sol = solveFBAmodelCplex(RedModel);
-                if sol.f < minObjSolVal
-                    RedModel = RedModel_orig;
-                    problematic_zero_minmax_thermo(k,1) = rxns_to_remove(i);
-                    k=k+1;
-                end
-            catch
-                NOT_BLOCKED_TFA=[NOT_BLOCKED_TFA;rxns_to_remove(i)];
+            RedModel = removeRxns(RedModel,TFVA_BlockedRxnNames(i));
+            sol = solveFBAmodelCplex(RedModel);
+            if sol.f < roundsd(temp_TFASol.val, 4, 'floor')
                 RedModel = RedModel_orig;
+                problematic_zero_minmax(k,1) = TFVA_BlockedRxnNames(i);
+                k = k+1;
             end
         end
-        clear k
-        % Find those unused metabolites and keep the indices
-        UnusedMets = RedModel.mets(any(sum(abs(RedModel.S),2) == 0,2));
-        if (~isempty(UnusedMets))
-            RedModel = removeMetabolites(RedModel, UnusedMets, false);
-        end
     end
+    clear k
     
     % Now convert again to tFA
     RedModel = prepModelforTFA(RedModel, DB_AlbertyUpdate, GEMmodel.CompartmentData, false, false);
     verboseFlag = false;
-    [RedModel, relaxedDGoVarsValues_inPP1b] = convToTFA(RedModel, DB_AlbertyUpdate, [], 'DGo', [], [], [], [], verboseFlag);
+    [RedModel, relaxedDGoVarsValues_inPP1b] = convToTFA(RedModel, DB_AlbertyUpdate, [], 'DGo', [], roundsd(sol_obj.f, 2, 'floor'), [], [], verboseFlag);
     
     % Add net-flux variables
     RedModel = addNetFluxVariables(RedModel);
@@ -629,7 +592,7 @@ if strcmp(performPostProcessing, 'yes')
     
     % > > > > > > > > > SAVING  WORKSPACE > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > >
     [dateStr, timeStr] = getDateTimeStrings(date,clock);                                                      %
-    eval(['save ./TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_12.mat;'])   %
+    eval(['save ',output_PATH,'/TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_12.mat;'])   %
     % < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < <
     
 elseif strcmp(performPostProcessing, 'no')
@@ -691,12 +654,11 @@ RedModel.GeneratedByUser = user_str;
 rG_RT = toc;
     
 % Save the runtime of the generation
-eval(['rG_RT_',user_str,'_',model_name,' = rG_RT;']);
-eval(['save ./UserOutputs/RunTimes/rG_RT_',user_str,'_',model_name,'.mat ', 'rG_RT_',user_str,'_',model_name,';']);
+RedModel.ReductionRuntime = rG_RT;
 
 % Save the model in the output folder
 eval([model_name,' = RedModel;']);
-eval(['save ./UserOutputs/Models/',Organism,'/',model_name,'.mat ', model_name,';']);
+eval(['save ',output_PATH,'/UserOutputs/Models/',Organism,'/',model_name,'.mat ', model_name,';']);
 
 
 end
