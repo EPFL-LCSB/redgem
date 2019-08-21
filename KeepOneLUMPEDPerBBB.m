@@ -35,7 +35,7 @@ else
 end
 
 dmodel = modelWithConst;
-sol = solveTFBAmodelCplex(dmodel);
+sol = solveTFAmodelCplex(dmodel);
 ind = getAllVar(dmodel, {'BFUSE'});
 if isempty(sol.x)
     MinLumpRxnFormulas = {'NA'};
