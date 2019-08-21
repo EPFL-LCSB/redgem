@@ -1,4 +1,8 @@
-function [activeRxns, LumpedRxnFormulas, bbbNames, DPsAll, IdNCNTNER, relaxedDGoVarsValues] = addBIOMASS(GSM_ForLumping, otherReactionsGSMForLump_idx, DB_AlbertyUpdate, BBBsToExclude, AerobicAnaerobic, Organism, AlignTransportsUsingMatFile, TimeLimitForSolver, FluxUnits, NumOfLumped, CplexParameters, GEMname, RxnNames_PrevThermRelax,biomassRxnNames,ATPsynth_RxnNames)
+function [activeRxns, LumpedRxnFormulas, bbbNames, DPsAll, IdNCNTNER, relaxedDGoVarsValues_ForEveryLumpedRxn] = ...
+        addBIOMASS(GSM_ForLumping, otherReactionsGSMForLump_idx, DB_AlbertyUpdate, BBBsToExclude, AerobicAnaerobic,...
+                   Organism, AlignTransportsUsingMatFile, TimeLimitForSolver, FluxUnits, NumOfLumped, CplexParameters, ...
+                   GEMname, RxnNames_PrevThermRelax,biomassRxnNames,ATPsynth_RxnNames, addGAM, PercentOfmuMaxForLumping, ...
+                   ImposeThermodynamics, output_PATH)
 % This function
 %
 % INPUTS
@@ -35,7 +39,11 @@ end
 
 % This is the maximum theoretical yield under the particular media.
 sol_obj = solveFBAmodelCplex(GSM_ForLumping);
-muMax = sol_obj.f; %0.05;%CHANGED FOR HUMAN!!!!! THIS SHOULD BE AN INPUT IN REDGEM
+
+% We put a lower bound to the muMax of biomass for the Lumping
+muMax = roundsd((PercentOfmuMaxForLumping/100)*sol_obj.f, 5, 'floor');
+
+% muMax = sol_obj.f; %0.05;%CHANGED FOR HUMAN!!!!! THIS SHOULD BE AN INPUT IN REDGEM
 if muMax == 0
     muMax = 0.1;
 end
@@ -126,23 +134,36 @@ end
 
 % This part added the hydrolysis reaction, but we have to make it automatic
 % for other genome scale models: Growth associated maintenance (GAM)
-[GAMequation, ppi_equation] = extractGAMcoefficientsFromBiomass(LumpCstModel);
-LumpCstModel = addReaction(LumpCstModel, 'DM_GAM_c', GAMequation);
-LumpCstModel.lb(length(LumpCstModel.rxns)) = 0;
-LumpCstModel.ub(length(LumpCstModel.rxns)) = 0;
+if strcmp(addGAM, 'yes')
+    [GAMequation, ppi_equation] = extractGAMcoefficientsFromBiomass(LumpCstModel);
+    LumpCstModel = addReaction(LumpCstModel, 'DM_GAM_c', GAMequation);
+    LumpCstModel.lb(length(LumpCstModel.rxns)) = 0;
+    LumpCstModel.ub(length(LumpCstModel.rxns)) = 0;
+    GAM_c = 'GAM_c';
+    GAM_StCoeff = -1*UnitFactor;
+else
+    GAM_c = [];
+    GAM_StCoeff = [];
+end
 
 if isfield(LumpCstModel,'A')
     solTFA = solveFBAmodelCplex(LumpCstModel);
     minObjSolVal = roundsd(0.9*solTFA.f, 1, 'floor');
 else
-    minObjSolVal = 1e-3;
+    minObjSolVal = sol_obj.f;% 1e-3;
 end
 
-
-LumpCstModel = prepModelforTFA(LumpCstModel, DB_AlbertyUpdate, LumpCstModel.CompartmentData, false, false);
-verboseFlag = false;
-[LumpCstModel, relaxedDGoVarsValues] = convToTFA(LumpCstModel, DB_AlbertyUpdate, [], 'DGo', RxnNames_PrevThermRelax, minObjSolVal, [], [], verboseFlag);
-LumpCstModel.relaxedDGoVarsValues = relaxedDGoVarsValues;
+if strcmp(ImposeThermodynamics, 'yes')
+    LumpCstModel = prepModelforTFA(LumpCstModel, DB_AlbertyUpdate, LumpCstModel.CompartmentData, false, false, false);
+    verboseFlag = false;
+    [LumpCstModel, relaxedDGoVarsValues] = convToTFA(LumpCstModel, DB_AlbertyUpdate, [], 'DGo', RxnNames_PrevThermRelax, minObjSolVal, [], [], verboseFlag);
+    LumpCstModel.relaxedDGoVarsValues = relaxedDGoVarsValues;
+elseif strcmp(ImposeThermodynamics, 'no')
+    fprintf('In the current case we do not impose thermodynamic constraints\n')
+    LumpCstModel = convFBA2MILP(LumpCstModel, DB_AlbertyUpdate);
+else
+    error('Wrong option for ImposeThermodynamics')
+end
 
 % Below we would like to investigate the possibility of the model to produce each of the
 % bbbs without any production of biomass. Therefore we set max growth to 0:
@@ -158,13 +179,24 @@ LumpCstModel.ub(find(LumpCstModel.c))=0;
 
 % > > > > > > > > > SAVING  WORKSPACE > > > > > > > > > > > > > > > > > > > > > >  > > > > > > >  > > > > >
 [dateStr, timeStr] = getDateTimeStrings(date,clock);                                                      %
-eval(['save ./TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_1.mat;'])    %
+eval(['save ',output_PATH,'/TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_1.mat;'])    %
 % < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < 
 
 %% Aligning the transport reactions that transport the same metabolite
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 checkgrowth = 0;
 LumpCstModel = AlighTransportHelperFun(LumpCstModel, AlignTransportsUsingMatFile, checkgrowth, CplexParameters, biomassRxnNames, ATPsynth_RxnNames);
+
+Mt = LumpCstModel;
+Mt.var_ub(Mt.f==1) = 10;
+sol_obj_Mt = solveTFAmodelCplex(Mt);
+
+if sol_obj_Mt.val < sol_obj.f
+    % This is the maximum theoretical yield under the particular media.
+    sol_obj = solveTFAmodelCplex(Mt);
+    % We put a lower bound to the muMax of biomass for the Lumping
+    muMax = roundsd((PercentOfmuMaxForLumping/100)*sol_obj_Mt.val, 5, 'floor');
+end
 
 
 %% Aerobic/Anaerobic
@@ -194,7 +226,7 @@ end
 
 % > > > > > > > > > SAVING  WORKSPACE > > > > > > > > > > > > > > > > > > > > > >  > > > > > > >  > > > > >
 [dateStr, timeStr] = getDateTimeStrings(date,clock);                                                      %
-eval(['save ./TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_2.mat;'])    %
+eval(['save ',output_PATH,'/TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_2.mat;'])    %
 % < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < 
 
 
@@ -273,8 +305,8 @@ bbb_not_to_lump = [{'h2o_c'} BBBsToExclude];
 % adding the hydrolysis as a bbb_element that needs to be also balanced
 % And also for the additional hydrolysis reaction
 
-bbb_drains_forward  = strcat('F_DM_', [bbb_metnames; 'GAM_c']);
-bbb_drains_backward = strcat('R_DM_', [bbb_metnames; 'GAM_c']);
+bbb_drains_forward  = strcat('F_DM_', [bbb_metnames; GAM_c]);
+bbb_drains_backward = strcat('R_DM_', [bbb_metnames; GAM_c]);
 bbb_drains_forward  = strrep(bbb_drains_forward,  '-', '_');
 bbb_drains_backward = strrep(bbb_drains_backward, '-', '_');
 
@@ -287,8 +319,8 @@ LumpCstModel.S = full(LumpCstModel.S);
 [~, bbb] = ismember(bbb_metnames, LumpCstModel.mets);
 bbb = bbb(find(bbb));
 stoich_bbb = LumpCstModel.S(bbb, find(LumpCstModel.c));
-bbb_metnames = [bbb_metnames; 'GAM_c'];
-stoich_bbb = [stoich_bbb; -1*UnitFactor];
+bbb_metnames = [bbb_metnames; GAM_c];
+stoich_bbb = [stoich_bbb; GAM_StCoeff];
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -307,8 +339,8 @@ rxnFormulasTotal = {};
 % not really bbbs) will be overproduced and hence accumulated to system,
 % leading to infeasibilities.
 % - Exclude the GAM related components of the bbbs
-not_to_add = {'atp_c' 'h2o_c' 'GAM_c' 'gly_c' 'cys_L_c'};
-%not_to_add = {'atp_c' 'h2o_c' 'GAM_c'}; NOTE:this is the default list of
+% not_to_add = {'atp_c' 'h2o_c' 'GAM_c' 'gly_c' 'cys_L_c'};
+not_to_add = [{'atp_c' 'h2o_c'} GAM_c]; % NOTE:this is the default list of
 %mets not_to_add, though in the human models sometimes we need to include
 %others.
 [~, bnta] = ismember(bbb_metnames, not_to_add);
@@ -324,10 +356,10 @@ LumpCstModel.ub(bmetttt)=LumpCstModel.var_ub(ind_bbb_forward);
 
 % > > > > > > > > > SAVING  WORKSPACE > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > >
 [dateStr, timeStr] = getDateTimeStrings(date,clock);                                                      %
-eval(['save ./TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_3.mat;'])    %
+eval(['save ',output_PATH,'/TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_3.mat;'])    %
 % < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < 
 
-LumpCstModel.b_for_lumping=roundsd(-muMax * stoich_bbb,1, 'floor');
+% LumpCstModel.b_for_lumping = roundsd(-muMax * stoich_bbb, 1, 'floor');
 
 for i = 1:length(bbb_metnames)%parfor i = 1:length(bbb_metnames)
     bbb_metnames{i}
@@ -390,7 +422,7 @@ end
 
 % > > > > > > > > > SAVING  WORKSPACE > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > >
 [dateStr, timeStr] = getDateTimeStrings(date,clock);                                                      %
-eval(['save ./TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_4.mat;'])    %
+eval(['save ',output_PATH,'/TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_4.mat;'])    %
 % < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < <
 
 
@@ -417,7 +449,7 @@ BBBsNotProduced = bbb_metnames(id_NA)
 LumpedRxnFormulas = {};
 bbbNames = [];
 activeRxns = {};
-relaxedDGoVarsValues = {};
+relaxedDGoVarsValues_ForEveryLumpedRxn = {};
 KeepTrackOfTransToBeCore = {};
 
 for i = 1:size(DPsAll,2)%parfor i = 1:size(DPsAll,2)
@@ -430,10 +462,12 @@ for i = 1:size(DPsAll,2)%parfor i = 1:size(DPsAll,2)
             % output. It also makes the coefficients of the LUMPED
             % reactions integers
             DPs_ij = DPs_i(:,j);
-            [bbbName_i, id_ActRxnNames_i, ActiveRxnsFormulas, LumpedRxnFormulas_i, relaxedDGoVarsValues_i, KeepTrackOfTransToBeCore_i] = testForIntegerAndThermo(LumpCstModel, GSM_ForLumping, DB_AlbertyUpdate, allBFUSEind, DPs_ij, muMax, IdNCNTNER, i, otherReactionsGSMForLump_idx, FluxUnits, CplexParameters, bbb_metnames, RxnNames_PrevThermRelax);
+            [bbbName_i, id_ActRxnNames_i, ActiveRxnsFormulas, LumpedRxnFormulas_i, relaxedDGoVarsValues_ForEveryLumpedRxn_i, KeepTrackOfTransToBeCore_i] = ...
+                testForIntegerAndThermo(LumpCstModel, GSM_ForLumping, DB_AlbertyUpdate, allBFUSEind, DPs_ij, muMax, IdNCNTNER, i, ...
+                otherReactionsGSMForLump_idx, FluxUnits, CplexParameters, bbb_metnames, RxnNames_PrevThermRelax, addGAM, ImposeThermodynamics);
             KeepTrackOfTransToBeCore = [KeepTrackOfTransToBeCore; KeepTrackOfTransToBeCore_i];
             bbbNames = [bbbNames; bbbName_i];
-            relaxedDGoVarsValues = [relaxedDGoVarsValues {relaxedDGoVarsValues_i}];
+            relaxedDGoVarsValues_ForEveryLumpedRxn = [relaxedDGoVarsValues_ForEveryLumpedRxn {relaxedDGoVarsValues_ForEveryLumpedRxn_i}];
             activeRxns = [activeRxns; [{id_ActRxnNames_i} {ActiveRxnsFormulas}]];
             LumpedRxnFormulas = [LumpedRxnFormulas; LumpedRxnFormulas_i];
         end
@@ -448,7 +482,7 @@ end
 
 % > > > > > > > > > SAVING  WORKSPACE > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > >
 [dateStr, timeStr] = getDateTimeStrings(date,clock);                                                      %
-eval(['save ./TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_5.mat;'])    %
+eval(['save ',output_PATH,'/TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_5.mat;'])    %
 % < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < <
 
 % Remove the Lumped reactions that were not feasible
@@ -456,11 +490,11 @@ idToRemove = find(strcmp(LumpedRxnFormulas,'NA'));
 LumpedRxnFormulas(idToRemove) = [];
 bbbNames(idToRemove) = [];
 activeRxns(idToRemove,:) = [];
-relaxedDGoVarsValues(idToRemove)=[];
+relaxedDGoVarsValues_ForEveryLumpedRxn(idToRemove)=[];
 
 % > > > > > > > > > SAVING  WORKSPACE > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > >
 [dateStr, timeStr] = getDateTimeStrings(date,clock);                                                      %
-eval(['save ./TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_6.mat;'])    %
+eval(['save ',output_PATH,'/TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_6.mat;'])    %
 % < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < <
 
 end
