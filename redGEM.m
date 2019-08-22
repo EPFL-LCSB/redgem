@@ -348,7 +348,9 @@ if strcmp(performLUMPGEM, 'yes')
     if strcmp(performREDGEMX,'yes')
         fprintf('Connecting the metabolites from the extracellular medium to the core\n')
         % connect extracellular subsystem to core
-        [ConnectExtrCell_rxns_all, ConnectExtrCell_id_all, sol_all] = redGEMX(rxns_ss, GSM_ForLumping, GSM_ForAdjMat, OriginalGEM, GEMmodel, UnitFactor, Organism, GEMname, NumOfConnections, CplexParameters);
+        [ConnectExtrCell_rxns_all, ConnectExtrCell_id_all, sol_all] = ...
+            redGEMX(rxns_ss, GSM_ForLumping, GSM_ForAdjMat, OriginalGEM, ...
+            GEMmodel, UnitFactor, Organism, GEMname, NumOfConnections, CplexParameters, DB_AlbertyUpdate, ImposeThermodynamics);
         
         otherReactionsGSMForLump_idx = setdiff(otherReactionsGSMForLump_idx,unique(ConnectExtrCell_id_all));
         

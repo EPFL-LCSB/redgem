@@ -1,4 +1,13 @@
-function [rxns_all, id_all, sol_all] = redGEMX(rxns_ss, GSM_ForLumping, GSM_ForAdjMat, OriginalGEM, GEMmodel, UnitFactor, Organism, GEMname, NumOfConnections, CplexParameters)
+function [rxns_all, id_all, sol_all] = redGEMX(rxns_ss, GSM_ForLumping, GSM_ForAdjMat, OriginalGEM, GEMmodel, UnitFactor, Organism, GEMname, NumOfConnections, CplexParameters, ReactionDB, ImposeThermodynamics)
+    
+if strcmp(ImposeThermodynamics, 'yes')
+    GSM_ForLumping = prepModelforTFA(GSM_ForLumping, ReactionDB, GSM_ForLumping.CompartmentData);
+    GSM_ForLumping = convToTFA(GSM_ForLumping, ReactionDB);
+elseif strcmp(ImposeThermodynamics, 'no')
+    GSM_ForLumping = convFBA2MILP(GSM_ForLumping, ReactionDB);
+else
+    error('Wrong option for ImposeThermodynamics')
+end
 
 if strcmp(NumOfConnections,'OnePerMetE')
     %flag: for each lumped reaction, how many alternative lumped reactions should the solver look for?
@@ -15,7 +24,7 @@ end
 
 ExtraCellSubsystem = GSM_ForLumping.ExtracellularMedium;
 
-model_for_extra=GSM_ForLumping;
+model_for_extra = GSM_ForLumping;
 
 model_for_extra.rev=ones(length(model_for_extra.rxns),1);
 model_for_extra=createintegermodel(model_for_extra);
