@@ -206,6 +206,6 @@ else
     error('Wrong option!')
 end
 
-GEMmodel = prepModelforTFA(GEMmodel,DB_AlbertyUpdate,GEMmodel.CompartmentData, false, false);
+% GEMmodel = prepModelforTFA(GEMmodel,DB_AlbertyUpdate,GEMmodel.CompartmentData, false, false);
 
 end

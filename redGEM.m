@@ -261,7 +261,7 @@ if L~=0 % if we want to connect subsystems
     eval(['structAllpaths_',Organism,'_L',num2str(D),'.ListForCofactorPairs = ListForCofactorPairs;'])
     eval(['save ' connectingpaths_folder f 'structAllpaths_',Organism,'_L',num2str(D),'.mat structAllpaths_',Organism,'_L',num2str(D),' DirAdjMatWn L_DirAdjMatWn L_DirAdjMatC L_DirAdjMatMets'])
     clear DirAdjMatWn DirAdjMatC %these two are included in countD and connectD
-
+    
     
     % > > > > > > > > > SAVING  WORKSPACE > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > >
     [dateStr, timeStr] = getDateTimeStrings(date,clock);                                                      %
@@ -269,7 +269,7 @@ if L~=0 % if we want to connect subsystems
     % < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < <
     
     % to select the reactions that join subsystems, extract the information.
-    [selectedPaths, selectedPathsExternal, connecting_reactions, rxns_ss, mets_ss, otherReactions] = extractAdjData(GSM_ForAdjMat,core_ss,L_DirAdjMatWn, L_DirAdjMatC, L_DirAdjMatMets,D,startFromMin,OnlyConnectExclusiveMets,ConnectIntracellularSubsystems,ApplyShortestDistanceOfSubsystems,ThrowErrorOnDViolation);    
+    [selectedPaths, selectedPathsExternal, connecting_reactions, rxns_ss, mets_ss, otherReactions] = extractAdjData(GSM_ForAdjMat,core_ss,L_DirAdjMatWn, L_DirAdjMatC, L_DirAdjMatMets,D,startFromMin,OnlyConnectExclusiveMets,ConnectIntracellularSubsystems,ApplyShortestDistanceOfSubsystems,ThrowErrorOnDViolation);
     % > > > > > > > > > SAVING  WORKSPACE > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > >
     [dateStr, timeStr] = getDateTimeStrings(date,clock);                                                      %
     eval(['save ',output_PATH,'/TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_4.mat;'])    %
@@ -283,7 +283,7 @@ else %% No Connections
         [~, rxns_ss{i}]=ismember(GSM_ForAdjMat.subSystems, core_ss{i});
         rxns_ss{i}=find(rxns_ss{i});
     end
-       
+    
 end
 
 
@@ -308,7 +308,7 @@ clear k;
 if strcmp(performLUMPGEM, 'yes')
     
     otherReactions = setdiff(1:length(GSM_ForLumping.rxns),core_rxns);
-
+    
     % Transform indices to GEM model (GSM_ForLumping) indexing
     [~, otherReactionsGSMForLump_idx] = ismember(GSM_ForLumping.rxns(otherReactions), GSM_ForLumping.rxns);
     
@@ -349,26 +349,26 @@ if strcmp(performLUMPGEM, 'yes')
         fprintf('Connecting the metabolites from the extracellular medium to the core\n')
         % connect extracellular subsystem to core
         [ConnectExtrCell_rxns_all, ConnectExtrCell_id_all, sol_all] = redGEMX(rxns_ss, GSM_ForLumping, GSM_ForAdjMat, OriginalGEM, GEMmodel, UnitFactor, Organism, GEMname, NumOfConnections, CplexParameters);
-
+        
         otherReactionsGSMForLump_idx = setdiff(otherReactionsGSMForLump_idx,unique(ConnectExtrCell_id_all));
         
         % > > > > > > > > > SAVING  WORKSPACE > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > >
         [dateStr, timeStr] = getDateTimeStrings(date,clock);                                                      %
         eval(['save ',output_PATH,'/TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_5a.mat;'])   %
         % < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < <
-
+        
     elseif strcmp(performREDGEMX,'no')
         fprintf('The metabolites from the extracellular medium were not connected to the core\n')
     else
         error('Wrong option!')
     end
     
-   
+    
     [activeRxns, LumpedRxnFormulas, bbbNames, DPsAll, IdNCNTNER, relaxedDGoVarsValues_ForEveryLumpedRxn] = ...
         addBIOMASS(GSM_ForLumping, otherReactionsGSMForLump_idx, DB_AlbertyUpdate, BBBsToExclude, AerobicAnaerobic, ...
-      Organism, AlignTransportsUsingMatFile, TimeLimitForSolver, FluxUnits, NumOfLumped, CplexParameters, ...
-      GEMname, RxnNames_PrevThermRelax, Biomass_rxns, ATPsynth_RxnNames, addGAM, PercentOfmuMaxForLumping, ...
-      ImposeThermodynamics, output_PATH);
+        Organism, AlignTransportsUsingMatFile, TimeLimitForSolver, FluxUnits, NumOfLumped, CplexParameters, ...
+        GEMname, RxnNames_PrevThermRelax, Biomass_rxns, ATPsynth_RxnNames, addGAM, PercentOfmuMaxForLumping, ...
+        ImposeThermodynamics, output_PATH);
     
     % > > > > > > > > > SAVING  WORKSPACE > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > >
     [dateStr, timeStr] = getDateTimeStrings(date,clock);                                                      %
@@ -453,7 +453,7 @@ eval(['save ',output_PATH,'/TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'
 %% Remove Blocked reactions (in FBA and TFA)
 
 if strcmp(performPostProcessing, 'yes')
-        
+    
     % Run fluxVariability analysis, and remove all those reactions that are
     % unable to carry any flux, while the model is still able to produce biomass:
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -470,7 +470,7 @@ if strcmp(performPostProcessing, 'yes')
     % preventing growth !!!!!!
     temp_FBASol = solveFBAmodelCplex(RedModel);
     RedModel.lb(find(RedModel.c))=temp_FBASol.f*0.1;
-
+    
     FBA_minmax = runMinMax(RedModel);
     FVA_BlockedRxnIds = find(abs(FBA_minmax(:,1))<feasTol & abs(FBA_minmax(:,2))<feasTol);
     FVA_BlockedRxnNames = RedModel.rxns(FVA_BlockedRxnIds);
@@ -503,92 +503,94 @@ if strcmp(performPostProcessing, 'yes')
     % < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < <
     
     %% Convert the reduced model to TFBA
-    
-    RedFBASol = solveFBAmodelCplex(RedModel);
-    RedFBASol = roundsd(RedFBASol.f, 4, 'floor');
-    
-    RedModel = prepModelforTFA(RedModel, DB_AlbertyUpdate, GEMmodel.CompartmentData,  false, false);
-    [RedModel, relaxedDGoVarsValues_inPP1a] = convToTFA(RedModel, DB_AlbertyUpdate, [], 'DGo', RxnNames_PrevThermRelax, 0.1*RedFBASol);
-    
-    RedTFASol = solveTFAmodelCplex(RedModel);
-    RedTFASol = roundsd(RedTFASol.val, 4, 'floor');
-    
-    GEM_FBASol = solveFBAmodelCplex(GEMmodel);
-    GEM_FBASol = roundsd(GEM_FBASol.f, 4, 'floor');
-    
-    if abs(RedTFASol - GEM_FBASol)/GEM_FBASol < 0.05
-        fprintf('The reduced model with the thermodynamic constraints is in very good agreement with the original GEM:\n')
-        fprintf('- GEM-FBA: %s\n', num2str(GEM_FBASol))
-        fprintf('- redGEM-FBA: %s\n', num2str(RedFBASol))
-        fprintf('- redGEM-TFA: %s\n', num2str(RedTFASol))
-    end
-    
-    % > > > > > > > > > SAVING  WORKSPACE > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > >
-    [dateStr, timeStr] = getDateTimeStrings(date,clock);                                                      %
-    eval(['save ',output_PATH,'/TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_10.mat;'])   %
-    % < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < <
-    
-    % IN THE GENERATED-OUTPUT MODEL: Aligning the transport reactions that transport the same metabolite
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    checkgrowth = 1;
-    RedModel = AlignTransportHelperFun(RedModel,AlignTransportsUsingMatFile, checkgrowth, CplexParameters, Biomass_rxns, ATPsynth_RxnNames);
-    
-    % > > > > > > > > > SAVING  WORKSPACE > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > >
-    [dateStr, timeStr] = getDateTimeStrings(date,clock);                                                      %
-    eval(['save ',output_PATH,'/TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_11.mat;'])   %
-    % < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < <
-    
-    
-    % Run Thermodynamic-fluxVariability analysis, and remove all those
-    % reactions that are unable to carry any flux, while the model is still
-    % able to produce biomass:
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % First we need to add the net-flux variables. They are
-    RedModel = addNetFluxVariables(RedModel);
-    
-    temp_TFASol = solveTFAmodelCplex(RedModel);
-    RedModel.var_lb(find(RedModel.f))=temp_TFASol.val*0.7;
+    if strcmp(ImposeThermodynamics, 'yes')
         
-    NFids = getAllVar(RedModel,{'NF'});
-    TFVA_BlockedRxnNames = [];
-    Tminmax = runTMinMax(RedModel,RedModel.varNames(NFids),30);
-    TFVA_BlockedRxnIds = find(abs(Tminmax(:,1))<feasTol & abs(Tminmax(:,2))<feasTol);
-    if ~isempty(TFVA_BlockedRxnIds)
-        warning(['Using TFVA we find that ',num2str(size(RedModel.rxns(TFVA_BlockedRxnIds),1)),' reactions appear to be blocked, so we remove these reactions!'])
-        TFVA_BlockedRxnNames = cellfun(@(x) x(4:end), RedModel.varNames(NFids(TFVA_BlockedRxnIds)), 'UniformOutput', false);
-        k = 1;
-        problematic_zero_minmax = {};
-        for i = 1:length(RedModel.rxns(TFVA_BlockedRxnIds))
-            RedModel_orig = RedModel;
-            RedModel = removeRxns(RedModel,TFVA_BlockedRxnNames(i));
-            sol = solveFBAmodelCplex(RedModel);
-            if sol.f < roundsd(temp_TFASol.val, 4, 'floor')
-                RedModel = RedModel_orig;
-                problematic_zero_minmax(k,1) = TFVA_BlockedRxnNames(i);
-                k = k+1;
+        RedFBASol = solveFBAmodelCplex(RedModel);
+        RedFBASol = roundsd(RedFBASol.f, 4, 'floor');
+        
+        RedModel = prepModelforTFA(RedModel, DB_AlbertyUpdate, GEMmodel.CompartmentData,  false, false);
+        [RedModel, relaxedDGoVarsValues_inPP1a] = convToTFA(RedModel, DB_AlbertyUpdate, [], 'DGo', RxnNames_PrevThermRelax, 0.1*RedFBASol);
+        
+        RedTFASol = solveTFAmodelCplex(RedModel);
+        RedTFASol = roundsd(RedTFASol.val, 4, 'floor');
+        
+        GEM_FBASol = solveFBAmodelCplex(GEMmodel);
+        GEM_FBASol = roundsd(GEM_FBASol.f, 4, 'floor');
+        
+        if abs(RedTFASol - GEM_FBASol)/GEM_FBASol < 0.05
+            fprintf('The reduced model with the thermodynamic constraints is in very good agreement with the original GEM:\n')
+            fprintf('- GEM-FBA: %s\n', num2str(GEM_FBASol))
+            fprintf('- redGEM-FBA: %s\n', num2str(RedFBASol))
+            fprintf('- redGEM-TFA: %s\n', num2str(RedTFASol))
+        end
+        
+        % > > > > > > > > > SAVING  WORKSPACE > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > >
+        [dateStr, timeStr] = getDateTimeStrings(date,clock);                                                      %
+        eval(['save ',output_PATH,'/TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_10.mat;'])   %
+        % < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < <
+        
+        % IN THE GENERATED-OUTPUT MODEL: Aligning the transport reactions that transport the same metabolite
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        checkgrowth = 1;
+        RedModel = AlignTransportHelperFun(RedModel,AlignTransportsUsingMatFile, checkgrowth, CplexParameters, Biomass_rxns, ATPsynth_RxnNames);
+        
+        % > > > > > > > > > SAVING  WORKSPACE > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > >
+        [dateStr, timeStr] = getDateTimeStrings(date,clock);                                                      %
+        eval(['save ',output_PATH,'/TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_11.mat;'])   %
+        % < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < <
+        
+        
+        % Run Thermodynamic-fluxVariability analysis, and remove all those
+        % reactions that are unable to carry any flux, while the model is still
+        % able to produce biomass:
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % First we need to add the net-flux variables. They are
+        RedModel = addNetFluxVariables(RedModel);
+        
+        temp_TFASol = solveTFAmodelCplex(RedModel);
+        RedModel.var_lb(find(RedModel.f))=temp_TFASol.val*0.7;
+        
+        NFids = getAllVar(RedModel,{'NF'});
+        TFVA_BlockedRxnNames = [];
+        Tminmax = runTMinMax(RedModel,RedModel.varNames(NFids),30);
+        TFVA_BlockedRxnIds = find(abs(Tminmax(:,1))<feasTol & abs(Tminmax(:,2))<feasTol);
+        if ~isempty(TFVA_BlockedRxnIds)
+            warning(['Using TFVA we find that ',num2str(size(RedModel.rxns(TFVA_BlockedRxnIds),1)),' reactions appear to be blocked, so we remove these reactions!'])
+            TFVA_BlockedRxnNames = cellfun(@(x) x(4:end), RedModel.varNames(NFids(TFVA_BlockedRxnIds)), 'UniformOutput', false);
+            k = 1;
+            problematic_zero_minmax = {};
+            for i = 1:length(RedModel.rxns(TFVA_BlockedRxnIds))
+                RedModel_orig = RedModel;
+                RedModel = removeRxns(RedModel,TFVA_BlockedRxnNames(i));
+                sol = solveFBAmodelCplex(RedModel);
+                if sol.f < roundsd(temp_TFASol.val, 4, 'floor')
+                    RedModel = RedModel_orig;
+                    problematic_zero_minmax(k,1) = TFVA_BlockedRxnNames(i);
+                    k = k+1;
+                end
             end
         end
+        clear k
+        
+        % Now convert again to tFA
+        RedModel = prepModelforTFA(RedModel, DB_AlbertyUpdate, GEMmodel.CompartmentData, false, false);
+        verboseFlag = false;
+        [RedModel, relaxedDGoVarsValues_inPP1b] = convToTFA(RedModel, DB_AlbertyUpdate, [], 'DGo', [], roundsd(sol_obj.f, 2, 'floor'), [], [], verboseFlag);
+        
+        % Add net-flux variables
+        RedModel = addNetFluxVariables(RedModel);
+        
+        % DGo that had to be relaxed for thermodynamic feasibility
+        % - for thermodynamic feasibility of each lumped
+        RedModel.relaxedDGoVarsValues_ForEveryLumpedRxn = relaxedDGoVarsValues_ForEveryLumpedRxn;
+        RedModel.relaxedDGoVarsValues_ForAddingAllLumpedRxns = [relaxedDGoVarsValues_inPP1a; relaxedDGoVarsValues_inPP1b];
+        
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % Keep track of the reactions that were removed from the reduced model
+        % because they had zero FVA & tFVA fluxes:
+        RedModel.PostProcessing.TFVA_BlockedRxnNames = TFVA_BlockedRxnNames;
     end
-    clear k
-    
-    % Now convert again to tFA
-    RedModel = prepModelforTFA(RedModel, DB_AlbertyUpdate, GEMmodel.CompartmentData, false, false);
-    verboseFlag = false;
-    [RedModel, relaxedDGoVarsValues_inPP1b] = convToTFA(RedModel, DB_AlbertyUpdate, [], 'DGo', [], roundsd(sol_obj.f, 2, 'floor'), [], [], verboseFlag);
-    
-    % Add net-flux variables
-    RedModel = addNetFluxVariables(RedModel);
-    
-    % DGo that had to be relaxed for thermodynamic feasibility
-    % - for thermodynamic feasibility of each lumped
-    RedModel.relaxedDGoVarsValues_ForEveryLumpedRxn = relaxedDGoVarsValues_ForEveryLumpedRxn;
-    RedModel.relaxedDGoVarsValues_ForAddingAllLumpedRxns = [relaxedDGoVarsValues_inPP1a; relaxedDGoVarsValues_inPP1b];
-    
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % Keep track of the reactions that were removed from the reduced model
-    % because they had zero FVA & tFVA fluxes:
     RedModel.PostProcessing.FVA_BlockedRxnNames = FVA_BlockedRxnNames;
-    RedModel.PostProcessing.TFVA_BlockedRxnNames = TFVA_BlockedRxnNames;
     
     % > > > > > > > > > SAVING  WORKSPACE > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > >
     [dateStr, timeStr] = getDateTimeStrings(date,clock);                                                      %
@@ -652,7 +654,7 @@ RedModel.GeneratedByUser = user_str;
 
 % How much time it took for all these?
 rG_RT = toc;
-    
+
 % Save the runtime of the generation
 RedModel.ReductionRuntime = rG_RT;
 
