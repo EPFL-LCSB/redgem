@@ -185,7 +185,7 @@ eval(['save ',output_PATH,'/TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'
 %% Aligning the transport reactions that transport the same metabolite
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 checkgrowth = 0;
-LumpCstModel = AlighTransportHelperFun(LumpCstModel, AlignTransportsUsingMatFile, checkgrowth, CplexParameters, biomassRxnNames, ATPsynth_RxnNames);
+LumpCstModel = AlignTransportHelperFun(LumpCstModel, AlignTransportsUsingMatFile, checkgrowth, CplexParameters, biomassRxnNames, ATPsynth_RxnNames);
 
 Mt = LumpCstModel;
 Mt.var_ub(Mt.f==1) = 10;

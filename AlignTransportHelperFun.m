@@ -1,4 +1,4 @@
-function RedModel = AlighTransportHelperFun(RedModel, AlignTransportsUsingMatFile, checkgrowth, CplexParameters,biomassRxnNames,ATPsynth_RxnNames)
+function RedModel = AlignTransportHelperFun(RedModel, AlignTransportsUsingMatFile, checkgrowth, CplexParameters,biomassRxnNames,ATPsynth_RxnNames)
 
 if strcmp(AlignTransportsUsingMatFile,'yesautomatic')
     % Find the parallel-transport reactions, and the metabolites that these transport

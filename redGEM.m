@@ -531,7 +531,7 @@ if strcmp(performPostProcessing, 'yes')
     % IN THE GENERATED-OUTPUT MODEL: Aligning the transport reactions that transport the same metabolite
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     checkgrowth = 1;
-    RedModel = AlighTransportHelperFun(RedModel,AlignTransportsUsingMatFile, checkgrowth, CplexParameters, Biomass_rxns, ATPsynth_RxnNames);
+    RedModel = AlignTransportHelperFun(RedModel,AlignTransportsUsingMatFile, checkgrowth, CplexParameters, Biomass_rxns, ATPsynth_RxnNames);
     
     % > > > > > > > > > SAVING  WORKSPACE > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > >
     [dateStr, timeStr] = getDateTimeStrings(date,clock);                                                      %
