@@ -22,7 +22,7 @@ if strcmp(AlignTransportsUsingMatFile,'yesautomatic')
     directions = ImportantTransports(:,4);
     directions = cell2mat(directions);
     
-    RedModel = removefutilegs(RedModel, rxns, directions, checkgrowth, CplexParameters);
+    RedModel = removefutiles(RedModel, rxns, directions, checkgrowth, CplexParameters);
 elseif strcmp(AlignTransportsUsingMatFile,'yesusingmatfile')
     fprintf('Align parallel transports using a saved .mat file that is supposed to contain this information\n')
     RedModel = removefutilegs_Apr2016(RedModel);
