@@ -372,7 +372,7 @@ if strcmp(performLUMPGEM, 'yes')
     indCORE = find(indCORE==0);
     [RedModel, rxns ,info_LMDP] = ...
         add_lumped_reactions(GSM_ForLumping, LumpedRxnFormulas, bbbNames, DB_AlbertyUpdate, ...
-                             GSM_ForLumping.rxns(indCORE), UnitFactor, CplexParameters, Organism, GEMname, activeRxns, output_PATH);
+                             GSM_ForLumping.rxns(indCORE), ImposeThermodynamics, CplexParameters, Organism, GEMname, activeRxns, output_PATH);
     
     if ~isempty(rxns)
         error('Additional reactions are required for growth!!')
@@ -456,8 +456,8 @@ if strcmp(performPostProcessing, 'yes')
     if origGEM_growth_UB>100
         origGEM_growth_UB = 100;
     end
-    RedModel.lb(find(RedModel.c)) = origGEM_growth_LB*UnitFactor;
-    RedModel.ub(find(RedModel.c)) = origGEM_growth_UB*UnitFactor;
+    RedModel.lb(find(RedModel.c)) = origGEM_growth_LB;
+    RedModel.ub(find(RedModel.c)) = origGEM_growth_UB;
     
     % We set a MINIMAL BOUND FOR GROWTH of 10% max growth to avoid deleting reactions
     % preventing growth !!!!!!
