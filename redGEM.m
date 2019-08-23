@@ -79,16 +79,6 @@ if ~exist([output_PATH,'/UserOutputs/Models/',Organism],'dir')
 end
 
 
-% We use the version of the convToTFA assumes that the flux is in
-% mu-mol/(gDW*h): convToTFA_FluxUnits
-if strcmp(FluxUnits,'mmol')
-    UnitFactor = 1;
-elseif strcmp(FluxUnits,'mumol')
-    UnitFactor = 1000;
-else
-    error('Wrong option!')
-end
-
 % Set properly the desired parameters for cplex LP and MILP
 [mipTolInt, scalPar, feasTol, emphPar] = setCplexParamHelper(CplexParameters);
 
@@ -128,8 +118,8 @@ load(thermo_data_PATH)
 %% Set the properties of the GEM that is reduced %
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-eval(['[OriginalGEM, GEMmodel, core_ss, Biomass_rxns, met_pairs_to_remove, InorgMetSEEDIDs, BBBsToExclude, ExtraCellSubsystem, OxPhosSubsystem] = '...
-    'case_',Organism,'_',GEMname,'(ZeroZeroGEMbounds, FluxUnits, ListForInorganicMets, ListForCofactorPairs, SelectedSubsystems, AddExtracellularSubsystem, DB_AlbertyUpdate);'])
+eval(['[OriginalGEM, GEMmodel, core_ss, Biomass_rxns, met_pairs_to_remove, InorgMetSEEDIDs, BBBsToExclude, ExtraCellSubsystem, OxPhosSubsystem] =' ...
+        case_filename,'(GEMname,ZeroZeroGEMbounds, ListForInorganicMets, ListForCofactorPairs, SelectedSubsystems, AddExtracellularSubsystem, DB_AlbertyUpdate);'])
 
 %%
 % Model Reaction Redundancy Check
@@ -348,7 +338,7 @@ if strcmp(performLUMPGEM, 'yes')
     if strcmp(performREDGEMX,'yes')
         fprintf('Connecting the metabolites from the extracellular medium to the core\n')
         % connect extracellular subsystem to core
-        [ConnectExtrCell_rxns_all, ConnectExtrCell_id_all, sol_all] = redGEMX(rxns_ss, GSM_ForLumping, GSM_ForAdjMat, OriginalGEM, GEMmodel, UnitFactor, Organism, GEMname, NumOfConnections, CplexParameters);
+        [ConnectExtrCell_rxns_all, ConnectExtrCell_id_all, sol_all] = redGEMX(rxns_ss, GSM_ForLumping, GSM_ForAdjMat, OriginalGEM, GEMmodel, Organism, GEMname, NumOfConnections, CplexParameters);
         
         otherReactionsGSMForLump_idx = setdiff(otherReactionsGSMForLump_idx,unique(ConnectExtrCell_id_all));
         
@@ -366,7 +356,7 @@ if strcmp(performLUMPGEM, 'yes')
     
     [activeRxns, LumpedRxnFormulas, bbbNames, DPsAll, IdNCNTNER, relaxedDGoVarsValues_ForEveryLumpedRxn] = ...
         addBIOMASS(GSM_ForLumping, otherReactionsGSMForLump_idx, DB_AlbertyUpdate, BBBsToExclude, AerobicAnaerobic, ...
-        Organism, AlignTransportsUsingMatFile, TimeLimitForSolver, FluxUnits, NumOfLumped, CplexParameters, ...
+        Organism, AlignTransportsUsingMatFile, TimeLimitForSolver, NumOfLumped, CplexParameters, ...
         GEMname, RxnNames_PrevThermRelax, Biomass_rxns, ATPsynth_RxnNames, addGAM, PercentOfmuMaxForLumping, ...
         ImposeThermodynamics, output_PATH);
     

@@ -1,4 +1,4 @@
-function [rxns_all, id_all, sol_all] = redGEMX(rxns_ss, GSM_ForLumping, GSM_ForAdjMat, OriginalGEM, GEMmodel, UnitFactor, Organism, GEMname, NumOfConnections, CplexParameters)
+function [rxns_all, id_all, sol_all] = redGEMX(rxns_ss, GSM_ForLumping, GSM_ForAdjMat, OriginalGEM, GEMmodel, Organism, GEMname, NumOfConnections, CplexParameters)
 
 if strcmp(NumOfConnections,'OnePerMetE')
     %flag: for each lumped reaction, how many alternative lumped reactions should the solver look for?
@@ -137,7 +137,7 @@ ExtraCellSubsystem_connect = GSM_ForLumping.ExtracellularMedium_connect;
 [~, bback]=ismember(strcat('R_', ExtraCellSubsystem_connect), model_for_extra.varNames);
 DPsAll = {};
 
-for i=1:length(ExtraCellSubsystem_connect)
+parfor i=1:length(ExtraCellSubsystem_connect)
     [i ExtraCellSubsystem_connect(i)]
     model_for_extra_temp=model_for_extra;
 

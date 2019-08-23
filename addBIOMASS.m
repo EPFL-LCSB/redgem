@@ -1,6 +1,6 @@
 function [activeRxns, LumpedRxnFormulas, bbbNames, DPsAll, IdNCNTNER, relaxedDGoVarsValues_ForEveryLumpedRxn] = ...
         addBIOMASS(GSM_ForLumping, otherReactionsGSMForLump_idx, DB_AlbertyUpdate, BBBsToExclude, AerobicAnaerobic,...
-                   Organism, AlignTransportsUsingMatFile, TimeLimitForSolver, FluxUnits, NumOfLumped, CplexParameters, ...
+                   Organism, AlignTransportsUsingMatFile, TimeLimitForSolver, NumOfLumped, CplexParameters, ...
                    GEMname, RxnNames_PrevThermRelax,biomassRxnNames,ATPsynth_RxnNames, addGAM, PercentOfmuMaxForLumping, ...
                    ImposeThermodynamics, output_PATH)
 % This function
@@ -27,15 +27,6 @@ function [activeRxns, LumpedRxnFormulas, bbbNames, DPsAll, IdNCNTNER, relaxedDGo
 %   cell with number of cells equal to the number of biomass building
 %   blocks. For each bbb there are so many DPs as defined by NumDPperBBB.
 
-% We use the version of the convToTFBA assumes that the flux is in
-% mu-mol/(gDW*h): convToTFBA_FluxUnits
-if strcmp(FluxUnits,'mmol')
-    UnitFactor = 1;
-elseif strcmp(FluxUnits,'mumol')
-    UnitFactor = 1000;
-else
-    error('Wrong option!')
-end
 
 % This is the maximum theoretical yield under the particular media.
 sol_obj = solveFBAmodelCplex(GSM_ForLumping);
@@ -140,7 +131,7 @@ if strcmp(addGAM, 'yes')
     LumpCstModel.lb(length(LumpCstModel.rxns)) = 0;
     LumpCstModel.ub(length(LumpCstModel.rxns)) = 0;
     GAM_c = 'GAM_c';
-    GAM_StCoeff = -1*UnitFactor;
+    GAM_StCoeff = -1;
 else
     GAM_c = [];
     GAM_StCoeff = [];
@@ -215,7 +206,7 @@ for i = 1:length(LumpCstModel.rxns)
     end
 end
 if strcmp(AerobicAnaerobic,'aerobic')
-    LumpCstModel.var_ub(id_oxy) = UnitFactor*20;
+    LumpCstModel.var_ub(id_oxy) = 20;
     LumpCstModel.lb(id_oxyFBA) = -20;
 elseif strcmp(AerobicAnaerobic,'anaerobic')
     LumpCstModel.var_ub(id_oxy) = 0;
@@ -361,14 +352,14 @@ eval(['save ',output_PATH,'/TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'
 
 % LumpCstModel.b_for_lumping = roundsd(-muMax * stoich_bbb, 1, 'floor');
 
-for i = 1:length(bbb_metnames)%parfor i = 1:length(bbb_metnames)
+parfor i = 1:length(bbb_metnames)%parfor i = 1:length(bbb_metnames)
     bbb_metnames{i}
     
     if ~ismember(bbb_metnames{i}, bbb_not_to_lump)
         
         dmodel = LumpCstModel;
         dmodel.var_ub(ind_bbb_backward(i)) = 0;
-        dmodel.var_ub(ind_bbb_forward(i))  = UnitFactor * 10;
+        dmodel.var_ub(ind_bbb_forward(i))  = 10;
         dmodel.var_lb(ind_bbb_forward(i)) = roundsd(-muMax * stoich_bbb(i), 5, 'floor'); %negative because the coef is neg
         
         if strcmp(TimeLimitForSolver,'yes')
@@ -452,7 +443,7 @@ activeRxns = {};
 relaxedDGoVarsValues_ForEveryLumpedRxn = {};
 KeepTrackOfTransToBeCore = {};
 
-for i = 1:size(DPsAll,2)%parfor i = 1:size(DPsAll,2)
+parfor i = 1:size(DPsAll,2)%parfor i = 1:size(DPsAll,2)
     i
     if ~isempty(DPsAll{i})
         DPs_i = DPsAll{i};
@@ -464,7 +455,7 @@ for i = 1:size(DPsAll,2)%parfor i = 1:size(DPsAll,2)
             DPs_ij = DPs_i(:,j);
             [bbbName_i, id_ActRxnNames_i, ActiveRxnsFormulas, LumpedRxnFormulas_i, relaxedDGoVarsValues_ForEveryLumpedRxn_i, KeepTrackOfTransToBeCore_i] = ...
                 testForIntegerAndThermo(LumpCstModel, GSM_ForLumping, DB_AlbertyUpdate, allBFUSEind, DPs_ij, muMax, IdNCNTNER, i, ...
-                otherReactionsGSMForLump_idx, FluxUnits, CplexParameters, bbb_metnames, RxnNames_PrevThermRelax, addGAM, ImposeThermodynamics);
+                otherReactionsGSMForLump_idx, CplexParameters, bbb_metnames, RxnNames_PrevThermRelax, addGAM, ImposeThermodynamics);
             KeepTrackOfTransToBeCore = [KeepTrackOfTransToBeCore; KeepTrackOfTransToBeCore_i];
             bbbNames = [bbbNames; bbbName_i];
             relaxedDGoVarsValues_ForEveryLumpedRxn = [relaxedDGoVarsValues_ForEveryLumpedRxn {relaxedDGoVarsValues_ForEveryLumpedRxn_i}];

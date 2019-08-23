@@ -16,7 +16,7 @@ RedGEMOpts =  struct (...
     'ListForInorganicMets',                [],... %(8)% curated, automatic
     'ListForCofactorPairs',                [],... %(9)% curated, automatic
     'ZeroZeroGEMbounds',                   [],... %(10)% Original, DefineCustom, OpenTo100
-    'FluxUnits',                           [],... %(11)% mmol, mumol, other
+    'case_filename',                       [],... %(11)% name of the case file for the corresponding organism
     'L',                                   [],... %(12)% 1,2,...
     'D',                                   [],... %(13)% 1,2,...
     'startFromMin',                        [],... %(14)% yes, no
@@ -100,9 +100,9 @@ choices{9}  = {'automatic', 'curated'};
 %%%%%%%%% 10: 'ZeroZeroGEMbounds' %%%%%%%%%%%%%%%%%%%%
 prompt{10}  = 'For the zero-zero GEM bounds, would you like to proceed with these bounds, open these bounds to +-100, or define custom?\n- Original \n- OpenTo100 \n- DefineCustom';
 choices{10} = {'Original', 'OpenTo100', 'DefineCustom'};
-%%%%%%%%% 11: 'FluxUnits' %%%%%%%%%%%%%%%%%%%%
-prompt{11}  = 'What are the units of the fluxes?\n- mmol/(gDW*h) \n- mu-mmol/(gDW*h)';
-choices{11} = {'mmol', 'mumol'};
+%%%%%%%%% 11: 'case_filename' %%%%%%%%%%%%%%%%%%%%
+prompt{11}  = 'Please specify the name of the case file for the corresponding organism';
+choices{11} = {'StringComment'};
 %%%%%%%%% 12: 'L' %%%%%%%%%%%%%%%%%%%%
 prompt{12}   = 'Please specify the L (0,1,2,...)';
 choices{12}  = 'GE0Int'; % integer greater or equal to zero

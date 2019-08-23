@@ -1,6 +1,6 @@
 function [bbbName_i, id_ActRxnNames_i, ActiveRxnsFormulas_i, LumpedRxnFormulas_i, relaxedDGoVarsValues_i, KeepTrackOfTransToBeCore] = ...
     testForIntegerAndThermo(LumpCstModel, GSM_ForLumping, DB_AlbertyUpdate, allBFUSEind, DPs_ij, muMax, IdNCNTNER, i, ...
-    otherReactionsGSMForLump_idx, FluxUnits, CplexParameters, bbb_metnames, RxnNames_PrevThermRelax, addGAM, ImposeThermodynamics)
+    otherReactionsGSMForLump_idx, CplexParameters, bbb_metnames, RxnNames_PrevThermRelax, addGAM, ImposeThermodynamics)
 % INPUT
 % - LumpCstModel:
 % - GSM_ForLumping:
@@ -13,7 +13,6 @@ function [bbbName_i, id_ActRxnNames_i, ActiveRxnsFormulas_i, LumpedRxnFormulas_i
 % - i:
 % - otherReactionsGSMForLump_idx: Indices of non-core reactions. These indices
 %   are according to GSM_ForLumping indexing.
-% - FluxUnits:
 % - CplexParameters
 %
 % OUTPUT
@@ -24,13 +23,6 @@ function [bbbName_i, id_ActRxnNames_i, ActiveRxnsFormulas_i, LumpedRxnFormulas_i
  
 changeCobraSolver('cplex_direct')
  
-if strcmp(FluxUnits,'mmol')
-    UnitFactor = 1;
-elseif strcmp(FluxUnits,'mumol')
-    UnitFactor = 1000;
-else
-    error('Wrong option!')
-end
 
 flag=0;
 % Set properly the desired parameters for cplex LP and MILP
@@ -120,7 +112,7 @@ end
 % The function above puts thermo only to the core. The one below puts thermo to the entire system.
 mini_model.c = zeros(size(mini_model.c));
 mini_model.c(find_cell(['DM_',regexprep(bbb_metnames_and_GAM_c{i},'-','_')], mini_model.rxns)) = 1;
-mini_model.ub(find(mini_model.c)) = 10* UnitFactor;
+mini_model.ub(find(mini_model.c)) = 10;
 FBAsolMiniModel = solveFBAmodelCplex(mini_model);
 FBAsolMiniModel = roundsd(0.99*FBAsolMiniModel.f, 4, 'floor');
 if FBAsolMiniModel < 10^-6
@@ -164,15 +156,15 @@ stoich_bbb = tmini_model.S(id_bbbs, find(tmini_model.c));
 stoich_bbb = [stoich_bbb; -1];
  
 % Set the upper bound of the forward drain flux of the current bbb to the highest alowed value
-tmini_model.var_ub(ind_bbb_forward(i)) = UnitFactor * 10;
+tmini_model.var_ub(ind_bbb_forward(i)) = 10;
 % Set the lower bound of the forward drain flux of the current bbb to a value equal to its stoichiometric coefficient (times a muMax, but this is 1 without problems so far).
 value = muMax * (-1*stoich_bbb(i));
 % If this value is very small (i.e. <10^-6) do not use that value, but 5*10^-5
-if value > UnitFactor*10^-8
+if value > 10^-8
     tmini_model.var_lb(ind_bbb_forward(i)) = roundsd(muMax*(-1*stoich_bbb(i)), 6, 'floor');
 else
     warning('The stoichiometric coefficient of the %s bbb is <10^-6!', bbb_metnames{i})
-    tmini_model.var_lb(ind_bbb_forward(i)) = UnitFactor * 5*10^-7;
+    tmini_model.var_lb(ind_bbb_forward(i)) = 5*10^-7;
 end
  
 % Here we form an optimization problem where we assume that the forward and
