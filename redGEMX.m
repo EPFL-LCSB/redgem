@@ -146,7 +146,7 @@ ExtraCellSubsystem_connect = GSM_ForLumping.ExtracellularMedium_connect;
 [~, bback]=ismember(strcat('R_', ExtraCellSubsystem_connect), model_for_extra.varNames);
 DPsAll = {};
 
-for i=1:length(ExtraCellSubsystem_connect)
+parfor i=1:length(ExtraCellSubsystem_connect)
     [i ExtraCellSubsystem_connect(i)]
     model_for_extra_temp=model_for_extra;
 
