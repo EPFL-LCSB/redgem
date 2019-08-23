@@ -78,7 +78,6 @@ if ~exist([output_PATH,'/UserOutputs/Models/',Organism],'dir')
     mkdir([output_PATH,'/UserOutputs/Models/',Organism])
 end
 
-
 % Set properly the desired parameters for cplex LP and MILP
 [mipTolInt, scalPar, feasTol, emphPar] = setCplexParamHelper(CplexParameters);
 
@@ -118,8 +117,8 @@ load(thermo_data_PATH)
 %% Set the properties of the GEM that is reduced %
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-eval(['[OriginalGEM, GEMmodel, core_ss, Biomass_rxns, met_pairs_to_remove, InorgMetSEEDIDs, BBBsToExclude, ExtraCellSubsystem, OxPhosSubsystem] =' ...
-        case_filename,'(GEMname,ZeroZeroGEMbounds, ListForInorganicMets, ListForCofactorPairs, SelectedSubsystems, AddExtracellularSubsystem, DB_AlbertyUpdate);'])
+eval(['[OriginalGEM, GEMmodel, core_ss, Biomass_rxns, met_pairs_to_remove, InorgMetSEEDIDs, BBBsToExclude, ExtraCellSubsystem, OxPhosSubsystem] = '...
+    'case_',Organism,'_',GEMname,'(ZeroZeroGEMbounds, ListForInorganicMets, ListForCofactorPairs, SelectedSubsystems, AddExtracellularSubsystem, DB_AlbertyUpdate);'])
 
 %%
 % Model Reaction Redundancy Check
@@ -259,7 +258,9 @@ if L~=0 % if we want to connect subsystems
     % < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < <
     
     % to select the reactions that join subsystems, extract the information.
-    [selectedPaths, selectedPathsExternal, connecting_reactions, rxns_ss, mets_ss, otherReactions] = extractAdjData(GSM_ForAdjMat,core_ss,L_DirAdjMatWn, L_DirAdjMatC, L_DirAdjMatMets,D,startFromMin,OnlyConnectExclusiveMets,ConnectIntracellularSubsystems,ApplyShortestDistanceOfSubsystems,ThrowErrorOnDViolation);
+    [selectedPaths, selectedPathsExternal, connecting_reactions, rxns_ss, mets_ss, otherReactions] = ...
+        extractAdjData(GSM_ForAdjMat,core_ss,L_DirAdjMatWn, L_DirAdjMatC, L_DirAdjMatMets,D,startFromMin,...
+                       OnlyConnectExclusiveMets,ConnectIntracellularSubsystems,ApplyShortestDistanceOfSubsystems,ThrowErrorOnDViolation);
     % > > > > > > > > > SAVING  WORKSPACE > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > >
     [dateStr, timeStr] = getDateTimeStrings(date,clock);                                                      %
     eval(['save ',output_PATH,'/TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_4.mat;'])    %
@@ -338,7 +339,9 @@ if strcmp(performLUMPGEM, 'yes')
     if strcmp(performREDGEMX,'yes')
         fprintf('Connecting the metabolites from the extracellular medium to the core\n')
         % connect extracellular subsystem to core
-        [ConnectExtrCell_rxns_all, ConnectExtrCell_id_all, sol_all] = redGEMX(rxns_ss, GSM_ForLumping, GSM_ForAdjMat, OriginalGEM, GEMmodel, Organism, GEMname, NumOfConnections, CplexParameters);
+        [ConnectExtrCell_rxns_all, ConnectExtrCell_id_all, sol_all] = ...
+            redGEMX(rxns_ss, GSM_ForLumping, GSM_ForAdjMat, OriginalGEM, ...
+                    GEMmodel, Organism, GEMname, NumOfConnections, CplexParameters, DB_AlbertyUpdate, ImposeThermodynamics);
         
         otherReactionsGSMForLump_idx = setdiff(otherReactionsGSMForLump_idx,unique(ConnectExtrCell_id_all));
         
@@ -356,9 +359,9 @@ if strcmp(performLUMPGEM, 'yes')
     
     [activeRxns, LumpedRxnFormulas, bbbNames, DPsAll, IdNCNTNER, relaxedDGoVarsValues_ForEveryLumpedRxn] = ...
         addBIOMASS(GSM_ForLumping, otherReactionsGSMForLump_idx, DB_AlbertyUpdate, BBBsToExclude, AerobicAnaerobic, ...
-        Organism, AlignTransportsUsingMatFile, TimeLimitForSolver, NumOfLumped, CplexParameters, ...
-        GEMname, RxnNames_PrevThermRelax, Biomass_rxns, ATPsynth_RxnNames, addGAM, PercentOfmuMaxForLumping, ...
-        ImposeThermodynamics, output_PATH);
+                   Organism, AlignTransportsUsingMatFile, TimeLimitForSolver, NumOfLumped, CplexParameters, ...
+                   GEMname, RxnNames_PrevThermRelax, Biomass_rxns, ATPsynth_RxnNames, addGAM, PercentOfmuMaxForLumping, ...
+                   ImposeThermodynamics, output_PATH);
     
     % > > > > > > > > > SAVING  WORKSPACE > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > >
     [dateStr, timeStr] = getDateTimeStrings(date,clock);                                                      %
@@ -369,7 +372,7 @@ if strcmp(performLUMPGEM, 'yes')
     indCORE = find(indCORE==0);
     [RedModel, rxns ,info_LMDP] = ...
         add_lumped_reactions(GSM_ForLumping, LumpedRxnFormulas, bbbNames, DB_AlbertyUpdate, ...
-        GSM_ForLumping.rxns(indCORE), UnitFactor, CplexParameters, Organism, GEMname, activeRxns, output_PATH);
+                             GSM_ForLumping.rxns(indCORE), UnitFactor, CplexParameters, Organism, GEMname, activeRxns, output_PATH);
     
     if ~isempty(rxns)
         error('Additional reactions are required for growth!!')
