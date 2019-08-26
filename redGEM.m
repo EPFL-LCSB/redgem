@@ -341,7 +341,7 @@ if strcmp(performLUMPGEM, 'yes')
         % connect extracellular subsystem to core
         [ConnectExtrCell_rxns_all, ConnectExtrCell_id_all, sol_all] = ...
             redGEMX(rxns_ss, GSM_ForLumping, GSM_ForAdjMat, OriginalGEM, ...
-                    GEMmodel, Organism, GEMname, NumOfConnections, CplexParameters, DB_AlbertyUpdate, ImposeThermodynamics);
+                    GEMmodel, Organism, GEMname, NumOfConnections, CplexParameters, DB_AlbertyUpdate, ImposeThermodynamics,output_PATH);
         
         otherReactionsGSMForLump_idx = setdiff(otherReactionsGSMForLump_idx,unique(ConnectExtrCell_id_all));
         

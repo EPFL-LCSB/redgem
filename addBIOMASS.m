@@ -352,7 +352,7 @@ eval(['save ',output_PATH,'/TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'
 
 % LumpCstModel.b_for_lumping = roundsd(-muMax * stoich_bbb, 1, 'floor');
 
-parfor i = 1:length(bbb_metnames)%parfor i = 1:length(bbb_metnames)
+for i = 1:length(bbb_metnames)%parfor i = 1:length(bbb_metnames)
     bbb_metnames{i}
     
     if ~ismember(bbb_metnames{i}, bbb_not_to_lump)

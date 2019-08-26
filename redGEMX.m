@@ -1,4 +1,4 @@
-function [rxns_all, id_all, sol_all] = redGEMX(rxns_ss, GSM_ForLumping, GSM_ForAdjMat, OriginalGEM, GEMmodel, Organism, GEMname, NumOfConnections, CplexParameters, ReactionDB, ImposeThermodynamics)
+function [rxns_all, id_all, sol_all] = redGEMX(rxns_ss, GSM_ForLumping, GSM_ForAdjMat, OriginalGEM, GEMmodel, Organism, GEMname, NumOfConnections, CplexParameters, ReactionDB, ImposeThermodynamics,output_PATH)
     
 if strcmp(ImposeThermodynamics, 'yes')
     GSM_ForLumping = prepModelforTFA(GSM_ForLumping, ReactionDB, GSM_ForLumping.CompartmentData);
@@ -146,7 +146,7 @@ ExtraCellSubsystem_connect = GSM_ForLumping.ExtracellularMedium_connect;
 [~, bback]=ismember(strcat('R_', ExtraCellSubsystem_connect), model_for_extra.varNames);
 DPsAll = {};
 
-parfor i=1:length(ExtraCellSubsystem_connect)
+for i=1:length(ExtraCellSubsystem_connect)
     [i ExtraCellSubsystem_connect(i)]
     model_for_extra_temp=model_for_extra;
 
@@ -205,10 +205,10 @@ parfor i=1:length(ExtraCellSubsystem_connect)
     end
 end
 
-% > > > > > > > > > SAVING  WORKSPACE > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > 
-[dateStr, timeStr] = getDateTimeStrings(date,clock);                                                    %
-eval(['save ./TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_1.mat;'])  %
-% < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < 
+% > > > > > > > > > SAVING  WORKSPACE > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > 
+[dateStr, timeStr] = getDateTimeStrings(date,clock);                                                                  %
+eval(['save ',output_PATH,'/TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_1.mat;'])  %
+% < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < <
 
 for i = 1:length(DPsAll)
     if ~isempty(DPsAll{i})
@@ -241,9 +241,9 @@ end
 rxns_all = rxns_all_min;
 id_all = id_all_dps_min;
 
-% > > > > > > > > > SAVING  WORKSPACE > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > >
-[dateStr, timeStr] = getDateTimeStrings(date,clock);                                                    %
-eval(['save ./TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_2.mat;'])  %
-% < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < <
+% > > > > > > > > > SAVING  WORKSPACE > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > >
+[dateStr, timeStr] = getDateTimeStrings(date,clock);                                                                  %
+eval(['save ',output_PATH,'/TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_2.mat;'])  %
+% < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < <
 
 end
