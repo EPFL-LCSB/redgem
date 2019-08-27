@@ -18,9 +18,9 @@ elseif strcmp(NumOfConnections,'SminMetE')
     SizeLUMPNetwork = 0.5;
 end
 
-% drains = extract_drains(GSM_ForLumping);
-% [~,ii] = ismember(drains, GSM_ForLumping.rxns);
-% ExtraCellSubsystem = drains(find(GSM_ForLumping.lb(ii)<0));
+
+
+[mipTolInt, scalPar, feasTol, emphPar] = setCplexParamHelper(CplexParameters);
 
 ExtraCellSubsystem = GSM_ForLumping.ExtracellularMedium;
 
@@ -186,7 +186,7 @@ for i=1:length(ExtraCellSubsystem_connect)
     model_for_extra_temp.A(num_constr+1,bfor(i)) = 1;
     model_for_extra_temp.A(num_constr+1,bback(i)) = 1;
 
-    sol = solveTFAmodelCplex(model_for_extra_temp,300);
+    sol = solveTFAmodelCplex(model_for_extra_temp, 300, [], mipTolInt, emphPar, feasTol, scalPar, []);
     
     if sol.val==0
         rxns_all{i,1} = 0;

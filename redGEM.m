@@ -410,7 +410,6 @@ if strcmp(performLUMPGEM, 'yes')
         error('This reaction(s) is not part of the original GEM!!')
     end
     
-    RedModel = extractGenesInfoForRedGEM(RedModel, GEMmodel_orig, idGEMRxnsInRedGEM, idLUMPEDRxnsInRedGEM);
     RedModelRightAfterLumping = RedModel;
     % This is the reduced model right after redGEM (without post-processing)
     RedModel.RedModelRightAfterLumping = RedModelRightAfterLumping;
@@ -461,16 +460,16 @@ if strcmp(performPostProcessing, 'yes')
     
     % We set a MINIMAL BOUND FOR GROWTH of 10% max growth to avoid deleting reactions
     % preventing growth !!!!!!
-    temp_FBASol = solveFBAmodelCplex(RedModel);
+    temp_FBASol = solveFBAmodelCplex(RedModel,scalPar, feasTol, emphPar);
     RedModel.lb(find(RedModel.c))=temp_FBASol.f*0.1;
     
-    FBA_minmax = runMinMax(RedModel);
+    FBA_minmax = runMinMax(RedModel,[],[],scalPar, feasTol, emphPar);
     FVA_BlockedRxnIds = find(abs(FBA_minmax(:,1))<feasTol & abs(FBA_minmax(:,2))<feasTol);
     FVA_BlockedRxnNames = RedModel.rxns(FVA_BlockedRxnIds);
     warning(['Using FVA we find that ',num2str(size(RedModel.rxns(FVA_BlockedRxnIds),1)),' reactions appear to be blocked'])
     warning('We remove these reactions!')
     rxns_to_remove = RedModel.rxns(FVA_BlockedRxnIds);
-    sol_obj = solveFBAmodelCplex(RedModel);
+    sol_obj = solveFBAmodelCplex(RedModel,[],[],scalPar, feasTol, emphPar);
     k = 1;
     problematic_zero_minmax = {};
     % ATTENTION!! We need to finalize the removeRxns and removeRxnsThermo. Now they are
@@ -482,7 +481,7 @@ if strcmp(performPostProcessing, 'yes')
     for i = 1:length(RedModel.rxns(FVA_BlockedRxnIds))
         RedModel_orig = RedModel;
         RedModel = removeRxns(RedModel,rxns_to_remove(i));
-        sol = solveFBAmodelCplex(RedModel);
+        sol = solveFBAmodelCplex(RedModel,[],[],scalPar, feasTol, emphPar);
         if sol.f < roundsd(sol_obj.f, 4, 'floor')
             RedModel = RedModel_orig;
             problematic_zero_minmax(k,1) = rxns_to_remove(i);
@@ -498,16 +497,16 @@ if strcmp(performPostProcessing, 'yes')
     %% Convert the reduced model to TFBA
     if strcmp(ImposeThermodynamics, 'yes')
         
-        RedFBASol = solveFBAmodelCplex(RedModel);
+        RedFBASol = solveFBAmodelCplex(RedModel,[],[],scalPar, feasTol, emphPar);
         RedFBASol = roundsd(RedFBASol.f, 4, 'floor');
         
         RedModel = prepModelforTFA(RedModel, DB_AlbertyUpdate, GEMmodel.CompartmentData,  false, false);
         [RedModel, relaxedDGoVarsValues_inPP1a] = convToTFA(RedModel, DB_AlbertyUpdate, [], 'DGo', RxnNames_PrevThermRelax, 0.1*RedFBASol);
         
-        RedTFASol = solveTFAmodelCplex(RedModel);
+        RedTFASol = solveTFAmodelCplex(RedModel,[],[], mipTolInt, emphPar, feasTol, scalPar);
         RedTFASol = roundsd(RedTFASol.val, 4, 'floor');
         
-        GEM_FBASol = solveFBAmodelCplex(GEMmodel);
+        GEM_FBASol = solveFBAmodelCplex(GEMmodel,[],[],scalPar, feasTol, emphPar);
         GEM_FBASol = roundsd(GEM_FBASol.f, 4, 'floor');
         
         if abs(RedTFASol - GEM_FBASol)/GEM_FBASol < 0.05
@@ -540,12 +539,12 @@ if strcmp(performPostProcessing, 'yes')
         % First we need to add the net-flux variables. They are
         RedModel = addNetFluxVariables(RedModel);
         
-        temp_TFASol = solveTFAmodelCplex(RedModel);
+        temp_TFASol = solveTFAmodelCplex(RedModel,[],[],mipTolInt,emphPar,feasTol,scalPar);
         RedModel.var_lb(find(RedModel.f))=temp_TFASol.val*0.7;
         
         NFids = getAllVar(RedModel,{'NF'});
         TFVA_BlockedRxnNames = [];
-        Tminmax = runTMinMax(RedModel,RedModel.varNames(NFids),30);
+        Tminmax = runTMinMax(RedModel,RedModel.varNames(NFids),30,[], mipTolInt,emphPar,feasTol,scalPar);
         TFVA_BlockedRxnIds = find(abs(Tminmax(:,1))<feasTol & abs(Tminmax(:,2))<feasTol);
         if ~isempty(TFVA_BlockedRxnIds)
             warning(['Using TFVA we find that ',num2str(size(RedModel.rxns(TFVA_BlockedRxnIds),1)),' reactions appear to be blocked, so we remove these reactions!'])
@@ -622,6 +621,9 @@ model_name = [RedModelName,'_',dateStr,'_',timeStr];
 %% Appending necessary informative fields to the model
 % Keep the original GEM from which the reduced model has been derived
 RedModel.OriginalGEM = OriginalGEM;
+
+% Correct the genes field in the reduction
+RedModel = genes_redGEM(RedModel,GEMmodel_orig);
 
 % Store in the model some of the properties of the reduction
 RedModel.ReductionProperties = paramRedGEM;

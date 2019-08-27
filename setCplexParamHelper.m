@@ -12,6 +12,11 @@ elseif strcmp(CplexParameters,'LCSBDefault')
     scalPar = -1;
     feasTol = 1e-9;
     emphPar = 1;
+elseif strcmp(CplexParameters,'LCSBScaling')
+    mipTolInt = 1e-9;
+    scalPar = 0;
+    feasTol = 1e-9;
+    emphPar = 1;
 elseif strcmp(CplexParameters,'redGEM_m7')
     mipTolInt = 1e-7;
     scalPar = -1;
