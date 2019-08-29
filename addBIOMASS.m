@@ -443,7 +443,7 @@ activeRxns = {};
 relaxedDGoVarsValues_ForEveryLumpedRxn = {};
 KeepTrackOfTransToBeCore = {};
 
-parfor i = 1:size(DPsAll,2)%parfor i = 1:size(DPsAll,2)
+for i = 1:size(DPsAll,2)%parfor i = 1:size(DPsAll,2)
     i
     if ~isempty(DPsAll{i})
         DPs_i = DPsAll{i};

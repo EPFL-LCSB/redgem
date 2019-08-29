@@ -469,7 +469,7 @@ if strcmp(performPostProcessing, 'yes')
     warning(['Using FVA we find that ',num2str(size(RedModel.rxns(FVA_BlockedRxnIds),1)),' reactions appear to be blocked'])
     warning('We remove these reactions!')
     rxns_to_remove = RedModel.rxns(FVA_BlockedRxnIds);
-    sol_obj = solveFBAmodelCplex(RedModel,[],[],scalPar, feasTol, emphPar);
+    sol_obj = solveFBAmodelCplex(RedModel,scalPar, feasTol, emphPar);
     k = 1;
     problematic_zero_minmax = {};
     % ATTENTION!! We need to finalize the removeRxns and removeRxnsThermo. Now they are
@@ -481,7 +481,7 @@ if strcmp(performPostProcessing, 'yes')
     for i = 1:length(RedModel.rxns(FVA_BlockedRxnIds))
         RedModel_orig = RedModel;
         RedModel = removeRxns(RedModel,rxns_to_remove(i));
-        sol = solveFBAmodelCplex(RedModel,[],[],scalPar, feasTol, emphPar);
+        sol = solveFBAmodelCplex(RedModel,scalPar, feasTol, emphPar);
         if sol.f < roundsd(sol_obj.f, 4, 'floor')
             RedModel = RedModel_orig;
             problematic_zero_minmax(k,1) = rxns_to_remove(i);
@@ -497,7 +497,7 @@ if strcmp(performPostProcessing, 'yes')
     %% Convert the reduced model to TFBA
     if strcmp(ImposeThermodynamics, 'yes')
         
-        RedFBASol = solveFBAmodelCplex(RedModel,[],[],scalPar, feasTol, emphPar);
+        RedFBASol = solveFBAmodelCplex(RedModel,scalPar, feasTol, emphPar);
         RedFBASol = roundsd(RedFBASol.f, 4, 'floor');
         
         RedModel = prepModelforTFA(RedModel, DB_AlbertyUpdate, GEMmodel.CompartmentData,  false, false);
@@ -506,7 +506,7 @@ if strcmp(performPostProcessing, 'yes')
         RedTFASol = solveTFAmodelCplex(RedModel,[],[], mipTolInt, emphPar, feasTol, scalPar);
         RedTFASol = roundsd(RedTFASol.val, 4, 'floor');
         
-        GEM_FBASol = solveFBAmodelCplex(GEMmodel,[],[],scalPar, feasTol, emphPar);
+        GEM_FBASol = solveFBAmodelCplex(GEMmodel,scalPar, feasTol, emphPar);
         GEM_FBASol = roundsd(GEM_FBASol.f, 4, 'floor');
         
         if abs(RedTFASol - GEM_FBASol)/GEM_FBASol < 0.05
@@ -554,7 +554,7 @@ if strcmp(performPostProcessing, 'yes')
             for i = 1:length(RedModel.rxns(TFVA_BlockedRxnIds))
                 RedModel_orig = RedModel;
                 RedModel = removeRxns(RedModel,TFVA_BlockedRxnNames(i));
-                sol = solveFBAmodelCplex(RedModel);
+                sol = solveFBAmodelCplex(RedModel,scalPar, feasTol, emphPar);
                 if sol.f < roundsd(temp_TFASol.val, 4, 'floor')
                     RedModel = RedModel_orig;
                     problematic_zero_minmax(k,1) = TFVA_BlockedRxnNames(i);
