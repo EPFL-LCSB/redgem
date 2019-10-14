@@ -94,7 +94,7 @@ for j = 1:length(checkMets)
     rxnsID = find(model_for_extra.S(checkMets(j), :));
     for k = 1:length(rxnsID)
         no_of_mets = length(find(model_for_extra.S(:,rxnsID(k))));
-        if no_of_mets == 1;
+        if no_of_mets == 1
             coreMets_drains = [coreMets_drains; model_for_extra.rxns(rxnsID(k))];
         end
     end
@@ -199,6 +199,7 @@ for i=1:length(ExtraCellSubsystem_connect)
         if NumAltPerMetE > 1
             [DPs, ~, ~] = findDP_YIELD_TimeLimit(model_for_extra_temp, NumAltPerMetE, sol, ind_bfuse, 300, SizeLUMPNetwork, CplexParameters);
             DPsAll{i} = DPs;
+            save('RedGEMX_DPs.mat','DPsAll','sol_all')
         else
             DPsAll{i} = sol.x;
         end      
@@ -245,5 +246,5 @@ id_all = id_all_dps_min;
 [dateStr, timeStr] = getDateTimeStrings(date,clock);                                                                  %
 eval(['save ',output_PATH,'/TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'_',timeStr,'_',mfilename,'_2.mat;'])  %
 % < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < <
-
+% 
 end
