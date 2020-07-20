@@ -52,7 +52,11 @@ for i_BBB=1:numel(BBBs)
 end
 % Keep this information for future redGEM models so we have information for
 % analysis on lumped reactions
-info_LMDP=[str_allLMPDs bbbNames LumpedRxnFormulas cell_SubNetworks_LMPD activeRxns(:,2)];
+if ~ isempty(bbbNames)
+    info_LMDP=[str_allLMPDs bbbNames LumpedRxnFormulas cell_SubNetworks_LMPD activeRxns(:,2)];
+else
+    info_LMDP = [];
+end
 
 for i=1:length(LumpedRxnFormulas)
     model_red = addReaction(model_red, str_allLMPDs{i}, LumpedRxnFormulas{i});
@@ -64,7 +68,7 @@ if sol.f > 1e-4
     rxns = {};
     missingMets = {};
 else
-    [missingMets, presentMets, solution_vec] = biomassPrecursorCheck(model_red);
+    [missingMets, presentMets] = biomassPrecursorCheck(model_red);
     % If the model is not able to produce biomass, then we use the entire
     % GS-model, together with the core, connecting, and exchange reactions,
     % as well as the lumped reactions to get the missing reactions
@@ -96,6 +100,7 @@ else
         model_red.lb(length(model_red.rxns))=0;
     end
 end
+
 
 model_red.info_LMDP=info_LMDP;
 

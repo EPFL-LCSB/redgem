@@ -24,6 +24,13 @@ for i=1:num_rxns
     model.rxns{i} = newrxnname;
 end
 
+% if the model has LMPD reactions, change the rev value of the LMPDs to 1,
+% to have R_ reaction in the modelIrrev.
+LMPD_ind = find(contains(model.rxns,'LMPD'));
+if ~isempty(LMPD_ind)
+    model.rev(LMPD_ind) = 1;
+end
+
 % if all reversible parameter is indicated then we assume all reactions are reversible first except biomass
 % and create the Irrev version of the model
 
