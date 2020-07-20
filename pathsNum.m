@@ -51,7 +51,7 @@ if strcmp(startFromMin,'yes')
             for k = 1:size(pairs,1)
                 d=1;   
                 while d < d_max &&...
-                    ~any(L_DirAdjMatWn(source_mets{k},target_mets{k},d))
+                    all(~any(L_DirAdjMatWn(source_mets{k},target_mets{k},d)))
                     d=d+1;
                 end
                 if d <= d_max
@@ -62,7 +62,7 @@ if strcmp(startFromMin,'yes')
             for k = 1:size(pairs,1)
                 d=1;   
                 while d < d_max &&...
-                    ~any(L_DirAdjMatWn(target_mets{k},source_mets{k},d))%switch direction!
+                    all(~any(L_DirAdjMatWn(target_mets{k},source_mets{k},d)))%switch direction!
                     d=d+1;
                 end
                 if d <= d_max
