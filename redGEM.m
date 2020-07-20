@@ -477,7 +477,9 @@ if strcmp(performPostProcessing, 'yes')
     % include or not. In the meantime I just complete the following two fields
     % (rules & rxnDeltaGerr) to avoid the error:
     RedModel.rules = [RedModel.rules;repmat({''},size(RedModel.rxns,1)-size(RedModel.rules,1),1)];
-    RedModel.rxnDeltaGRerr = [RedModel.rxnDeltaGRerr;repmat(10^7, size(RedModel.rxns,1)-size(RedModel.rxnDeltaGRerr,1) ,1)];
+    if strcmp(ImposeThermodynamics, 'yes')
+        RedModel.rxnDeltaGRerr = [RedModel.rxnDeltaGRerr;repmat(10^7, size(RedModel.rxns,1)-size(RedModel.rxnDeltaGRerr,1) ,1)];
+    end
     for i = 1:length(RedModel.rxns(FVA_BlockedRxnIds))
         RedModel_orig = RedModel;
         RedModel = removeRxns(RedModel,rxns_to_remove(i));
@@ -544,7 +546,7 @@ if strcmp(performPostProcessing, 'yes')
         
         NFids = getAllVar(RedModel,{'NF'});
         TFVA_BlockedRxnNames = [];
-        Tminmax = runTMinMax(RedModel,RedModel.varNames(NFids),30,[], mipTolInt,emphPar,feasTol,scalPar);
+        Tminmax = runTMinMax(RedModel,RedModel.varNames(NFids),30,mipTolInt,emphPar,feasTol,scalPar);
         TFVA_BlockedRxnIds = find(abs(Tminmax(:,1))<feasTol & abs(Tminmax(:,2))<feasTol);
         if ~isempty(TFVA_BlockedRxnIds)
             warning(['Using TFVA we find that ',num2str(size(RedModel.rxns(TFVA_BlockedRxnIds),1)),' reactions appear to be blocked, so we remove these reactions!'])

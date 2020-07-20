@@ -6,7 +6,7 @@ function model = genes_redGEM(model,gem)
     end
 
     model.lb(find(model.c)) = 0;
-    model.var_lb(find(model.f)+1) = 0;
+%     model.var_lb(find(model.f)+1) = 0;
 
     [~,ind_rxns] = ismember(model.rxns, gem.rxns);
     ind_rxns = ind_rxns(find(ind_rxns)); % because of the lumps
@@ -37,5 +37,4 @@ function model = genes_redGEM(model,gem)
     model.grRules(ind_lumps) = {''};
     model.rxnGeneMat(ind_lumps,:) = zeros(length(ind_lumps),length(model.genes));
 
-    %singleGeneDeletion(model);
 end
