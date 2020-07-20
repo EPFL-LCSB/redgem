@@ -101,7 +101,9 @@ for i = 1:size(bbb_metnames,1)
         LumpCstModel.lb(DMrxnIDexists) = 0;
         LumpCstModel.ub(DMrxnIDexists) = 60;
     else
-        LumpCstModel.rxnMapResult{end+1} = 'drain flux';
+        if strcmp(ImposeThermodynamics, 'yes')
+            LumpCstModel.rxnMapResult{end+1} = 'drain flux';
+        end
         LumpCstModel.isDrain(end+1) = 1;
         LumpCstModel.isTrans(end+1) = 0;
     end
@@ -151,7 +153,7 @@ if strcmp(ImposeThermodynamics, 'yes')
     LumpCstModel.relaxedDGoVarsValues = relaxedDGoVarsValues;
 elseif strcmp(ImposeThermodynamics, 'no')
     fprintf('In the current case we do not impose thermodynamic constraints\n')
-    LumpCstModel = convFBA2MILP(LumpCstModel, DB_AlbertyUpdate);
+    LumpCstModel = convFBA2MILP(LumpCstModel, DB_AlbertyUpdate);  
 else
     error('Wrong option for ImposeThermodynamics')
 end
@@ -178,16 +180,16 @@ eval(['save ',output_PATH,'/TEMP/WorkSpaces/',Organism,'/',GEMname,'/',dateStr,'
 checkgrowth = 0;
 LumpCstModel = AlignTransportHelperFun(LumpCstModel, AlignTransportsUsingMatFile, checkgrowth, CplexParameters, biomassRxnNames, ATPsynth_RxnNames);
 
-Mt = LumpCstModel;
-Mt.var_ub(Mt.f==1) = 10;
-sol_obj_Mt = solveTFAmodelCplex(Mt);
-
-if sol_obj_Mt.val < sol_obj.f
-    % This is the maximum theoretical yield under the particular media.
-    sol_obj = solveTFAmodelCplex(Mt);
-    % We put a lower bound to the muMax of biomass for the Lumping
-    muMax = roundsd((PercentOfmuMaxForLumping/100)*sol_obj_Mt.val, 5, 'floor');
-end
+% Mt = LumpCstModel;
+% Mt.var_ub(Mt.f==1) = 10;
+% sol_obj_Mt = solveTFAmodelCplex(Mt);
+% 
+% if sol_obj_Mt.val < sol_obj.f
+%     % This is the maximum theoretical yield under the particular media.
+%     sol_obj = solveTFAmodelCplex(Mt);
+%     % We put a lower bound to the muMax of biomass for the Lumping
+%     muMax = roundsd((PercentOfmuMaxForLumping/100)*sol_obj_Mt.val, 5, 'floor');
+% end
 
 
 %% Aerobic/Anaerobic

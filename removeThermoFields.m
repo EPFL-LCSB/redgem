@@ -30,9 +30,9 @@ end
 if (isfield(model,'rxnComp'))
     model = rmfield(model, 'rxnComp');
 end
-% if (isfield(model,'rxnMapResult'))
-%     model = rmfield(model, 'rxnMapResult');
-% end
+if (isfield(model,'rxnMapResult'))
+    model = rmfield(model, 'rxnMapResult');
+end
 if (isfield(model,'isCoreTrans'))
     model = rmfield(model, 'isCoreTrans');
 end
