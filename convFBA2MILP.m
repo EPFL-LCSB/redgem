@@ -1,6 +1,6 @@
 function model = convFBA2MILP(model, ReactionDB)
 
-bigM = 1e3;
+bigM = 1e6;
 % % save the original direction reversibilities
 [num_mets_org, num_rxns] = size(model.S);
 
@@ -71,7 +71,7 @@ for i = 1:num_vars
     model.vartypes{i,1} = 'C';
 end
 
-for i = 1:num_rxns;
+for i = 1:num_rxns
     
     F_flux_index = find(ismember(model.varNames, strcat('F_', model.rxns{i})));
     R_flux_index = find(ismember(model.varNames, strcat('R_', model.rxns{i})));

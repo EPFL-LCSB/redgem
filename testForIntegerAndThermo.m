@@ -200,8 +200,8 @@ indfr=getAllVar(tmini_model, {'F' 'R'});
 tmini_model_orig=tmini_model;
 
 % The hope is that the problem will be feasible with integer coefficients:
-tmini_model.var_ub(indfr)=1000*tmini_model.var_ub(indfr);
-tmini_model.var_lb(indfr)=1000*tmini_model.var_lb(indfr);
+tmini_model.var_ub(indfr)=1000000*tmini_model.var_ub(indfr);
+tmini_model.var_lb(indfr)=1000000*tmini_model.var_lb(indfr);
 
 tmini_model.vartypes(id_FB) = {'I'};
 sol = solveTFAmodelCplex(tmini_model, 300, [], mipTolInt, emphPar, feasTol, scalPar, []);
