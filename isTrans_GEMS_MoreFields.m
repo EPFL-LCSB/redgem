@@ -60,4 +60,10 @@ for i=1:length(model.rxns)
     end
 end
 
+drains = extract_drains(model);
+[~,id] = ismember(drains, model.rxns);
+model.isExchange = zeros(length(model.rxns),1);
+model.isExchange(id) = 1;
+
+
 end
