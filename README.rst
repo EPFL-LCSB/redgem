@@ -15,8 +15,8 @@ You will need to have `Git LFS <https://git-lfs.github.com/>`_ in order to prope
 
 .. code:: bash
 
-    git clone https://github.com/EPFL-LCSB/redhuman.git /path/to/redhuman
-    cd /path/to/redhuman
+    git clone https://github.com/EPFL-LCSB/redhgem.git /path/to/redgem
+    cd /path/to/redgem
     git lfs install
     git lfs pull
 
