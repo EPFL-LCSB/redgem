@@ -25,7 +25,7 @@ paramEcoli    = struct (...%model parameters
                         'ListForInorganicMets',               'automatic'                            ,... % curated, automatic
                         'ListForCofactorPairs',               'curated'                              ,... % curated, automatic
                         'ZeroZeroGEMbounds',                  'Original'                             ,... % Original, DefineCustom, OpenTo100      
-                        'FluxUnits',                          'mmol'                                 ,... % mmol, mumol, other      
+                        'case_filename',                      'case_ecoli_iJO1366'                           ,... % name of the matlab function for the specific organism      
                         ...%redGEM parameters
                         'L',                                  6                                      ,... % 1,2,...
                         'D',                                  1                                      ,... % 1,2,...
@@ -39,9 +39,12 @@ paramEcoli    = struct (...%model parameters
                         'NumOfConnections',                   'OnePerMetE'                           ,... % OnePerMetE ,SminMetE
                         ...%lumpGEM parameters
                         'performLUMPGEM',                     'yes'                                  ,... % yes, no (do we want to perform lumping or not?)   
+                        'PercentOfmuMaxForLumping',            100                                   ,... % Please specify the percentage of muMax that we should impose for the lumped reactions (100, 90, ..., 10, 0)
+                        'addGAM',                             'yes'                                  ,... % Would you like to extract and add to the reduced model a growth associated maintenance (GAM) reaction? yes, no 
                         'PreventBBBuptake',                   'no'                                   ,... % yes/no: if yes, do not allow uptake through any bbb drains.     
                         'NumOfLumped',                        'Smin'                                 ,... % OnePerBBB, Smin, Sminp1, Sminp2, Sminp3
                         'AlignTransportsUsingMatFile',        'yesautomatic'                         ,... % yesusingmatfile, yesusingReducedmatfile, yesautomatic,no
+                        'ImposeThermodynamics',               'yes'                                  ,... % would you like to impose thermodynamic cnstraints? yes, no
                         ...%postprocessing parameters
                         'performPostProcessing',              'yes'                                  ,... % yes, no
                         ...%solver parameters
@@ -50,7 +53,8 @@ paramEcoli    = struct (...%model parameters
                         ....%paths to folders
                         'CPLEX_PATH',                         'PATH/TO/CPLEX'                        ,... %provide path to CPLEX         
                         'TFA_PATH',                           'PATH/TO/TFA'                          ,... %provide path to matTFA
-                        'thermo_data_PATH',                   'PATH/TO/THERMODATA/thermo_data.mat')  ;% Provide the path to the thermodynamic data (including the file name)
+                        'thermo_data_PATH',                   'PATH/TO/THERMODATA/thermo_data.mat'   ,... % Provide the path to the thermodynamic data (including the file name)
+                        'output_PATH',                        'OUPUT/PATH');                              % provide output path where the files will be saved
 redGEM(paramEcoli);
 
 end
