@@ -274,7 +274,7 @@ else %% No Connections
         [~, rxns_ss{i}]=ismember(GSM_ForAdjMat.subSystems, core_ss{i});
         rxns_ss{i}=find(rxns_ss{i});
     end
-    
+    connecting_reactions = [];
 end
 
 
